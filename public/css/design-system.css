@@ -1,0 +1,167 @@
+/**
+ * Design System - Système de design unifié
+ * Ce fichier définit les tokens de design de base pour l'application
+ * Les valeurs peuvent être personnalisées via l'interface Superadmin
+ */
+
+:root {
+    /* ==========================================
+       TYPOGRAPHIE - Tailles standardisées
+       ========================================== */
+    --font-size-xs: 0.75rem;      /* 12px - Petits textes, labels */
+    --font-size-sm: 0.875rem;    /* 14px - Textes secondaires */
+    --font-size-base: 1rem;       /* 16px - Texte de base (standard) */
+    --font-size-md: 1.125rem;     /* 18px - Textes importants */
+    --font-size-lg: 1.25rem;      /* 20px - Sous-titres */
+    --font-size-xl: 1.5rem;       /* 24px - Titres h3 */
+    --font-size-2xl: 1.875rem;    /* 30px - Titres h2 */
+    --font-size-3xl: 2.25rem;     /* 36px - Titres h1 */
+    
+    /* ==========================================
+       ESPACEMENTS - Standardisés
+       ========================================== */
+    --spacing-xs: 0.25rem;        /* 4px */
+    --spacing-sm: 0.5rem;         /* 8px */
+    --spacing-md: 0.75rem;        /* 12px */
+    --spacing-base: 1rem;         /* 16px */
+    --spacing-lg: 1.5rem;         /* 24px */
+    --spacing-xl: 2rem;           /* 32px */
+    --spacing-2xl: 3rem;          /* 48px */
+    
+    /* ==========================================
+       TAILLES D'ÉLÉMENTS
+       ========================================== */
+    /* Avatars */
+    --avatar-sm: 32px;
+    --avatar-md: 40px;
+    --avatar-lg: 56px;
+    --avatar-xl: 80px;
+    
+    /* Boutons */
+    --btn-height-sm: 32px;
+    --btn-height-md: 40px;
+    --btn-height-lg: 48px;
+    
+    /* Inputs */
+    --input-height-sm: 36px;
+    --input-height-md: 42px;
+    --input-height-lg: 48px;
+    
+    /* ==========================================
+       BORDER RADIUS
+       ========================================== */
+    --radius-sm: 0.25rem;         /* 4px */
+    --radius-md: 0.5rem;          /* 8px */
+    --radius-lg: 0.75rem;         /* 12px */
+    --radius-xl: 1rem;            /* 16px */
+    
+    /* ==========================================
+       SHADOWS
+       ========================================== */
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+    --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.15);
+}
+
+/* ==========================================
+   APPLICATION DES VARIABLES AUX ÉLÉMENTS
+   ========================================== */
+
+/* Typographie */
+body {
+    font-size: var(--font-size-base, 1rem);
+}
+
+h1 { font-size: var(--font-size-3xl, 2.25rem); }
+h2 { font-size: var(--font-size-2xl, 1.875rem); }
+h3 { font-size: var(--font-size-xl, 1.5rem); }
+h4 { font-size: var(--font-size-lg, 1.25rem); }
+h5 { font-size: var(--font-size-md, 1.125rem); }
+h6 { font-size: var(--font-size-base, 1rem); }
+
+.small, small {
+    font-size: var(--font-size-sm, 0.875rem);
+}
+
+.text-xs {
+    font-size: var(--font-size-xs, 0.75rem);
+}
+
+/* Avatars */
+.avatar-sm {
+    width: var(--avatar-sm, 32px);
+    height: var(--avatar-sm, 32px);
+    font-size: calc(var(--avatar-sm, 32px) * 0.4);
+}
+
+.avatar-md {
+    width: var(--avatar-md, 40px);
+    height: var(--avatar-md, 40px);
+    font-size: calc(var(--avatar-md, 40px) * 0.4);
+}
+
+.avatar-lg {
+    width: var(--avatar-lg, 56px);
+    height: var(--avatar-lg, 56px);
+    font-size: calc(var(--avatar-lg, 56px) * 0.4);
+}
+
+.avatar-xl {
+    width: var(--avatar-xl, 80px);
+    height: var(--avatar-xl, 80px);
+    font-size: calc(var(--avatar-xl, 80px) * 0.4);
+}
+
+/* Boutons - Utilisation des variables UI Settings si disponibles */
+.btn {
+    font-size: var(--button-font-size, var(--font-size-sm, 0.875rem));
+    padding: var(--button-padding-y, 0.5rem) var(--button-padding-x, 1rem);
+    border-radius: var(--button-border-radius, 6px);
+    min-height: var(--btn-height-md, 40px);
+}
+
+.btn-sm {
+    min-height: var(--btn-height-sm, 32px);
+    font-size: var(--font-size-xs, 0.75rem);
+    padding: calc(var(--button-padding-y, 0.5rem) * 0.75) calc(var(--button-padding-x, 1rem) * 0.75);
+}
+
+.btn-lg {
+    min-height: var(--btn-height-lg, 48px);
+    font-size: var(--font-size-md, 1.125rem);
+    padding: calc(var(--button-padding-y, 0.5rem) * 1.25) calc(var(--button-padding-x, 1rem) * 1.25);
+}
+
+/* Inputs - Utilisation des variables UI Settings si disponibles */
+.form-control,
+.form-select {
+    font-size: var(--input-font-size, var(--font-size-sm, 0.875rem));
+    padding: var(--input-padding-y, 0.5rem) var(--input-padding-x, 0.75rem);
+    min-height: var(--input-height-md, 42px);
+}
+
+.form-control-sm {
+    min-height: var(--input-height-sm, 36px);
+    font-size: var(--font-size-xs, 0.75rem);
+    padding: calc(var(--input-padding-y, 0.5rem) * 0.75) calc(var(--input-padding-x, 0.75rem) * 0.75);
+}
+
+.form-control-lg {
+    min-height: var(--input-height-lg, 48px);
+    font-size: var(--font-size-md, 1.125rem);
+    padding: calc(var(--input-padding-y, 0.5rem) * 1.25) calc(var(--input-padding-x, 0.75rem) * 1.25);
+}
+
+/* Cards */
+.card {
+    border-radius: var(--radius-lg, 0.75rem);
+    padding: var(--card-padding, 1rem);
+}
+
+/* Navigation */
+.nav-link {
+    font-size: var(--nav-link-font-size, var(--font-size-sm, 0.875rem));
+    padding: var(--nav-link-padding-y, 0.6rem) var(--nav-link-padding-x, 0.875rem);
+}
+

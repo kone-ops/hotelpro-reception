@@ -1,0 +1,171 @@
+<x-app-layout>
+	<x-slot name="header">Créer un nouvel hôtel</x-slot>
+	
+	<div class="row">
+		<div class="col-md-8">
+			<div class="card border-0 shadow-sm">
+				<div class="card-header bg-transparent">
+					<h5 class="mb-0">Informations de l'hôtel</h5>
+				</div>
+				<div class="card-body">
+					<form method="post" action="{{ route('super.hotels.store') }}" enctype="multipart/form-data">
+						@csrf
+						
+						<div class="mb-4">
+							<label class="form-label">Logo de l'hôtel</label>
+							<div class="d-flex align-items-start gap-3">
+								<div class="flex-grow-1">
+									<input type="file" name="logo" class="form-control" id="logoInput" accept="image/jpeg,image/jpg,image/png,image/svg+xml">
+									<div class="form-text">Format: JPG, PNG ou SVG. Taille max: 2 Mo</div>
+									@error('logo')<div class="text-danger small">{{ $message }}</div>@enderror
+								</div>
+								<div id="logoPreview" class="d-none">
+									<img src="" alt="Aperçu logo" style="max-height: 80px; max-width: 150px; border-radius: 8px; border: 2px solid #e9ecef;">
+								</div>
+							</div>
+						</div>
+						
+						<div class="row">
+							<div class="col-md-6 mb-3">
+								<label class="form-label">Nom de l'hôtel *</label>
+								<input type="text" name="name" class="form-control" value="{{ old('name') }}" required>
+								@error('name')<div class="text-danger small">{{ $message }}</div>@enderror
+							</div>
+							<div class="col-md-6 mb-3">
+								<label class="form-label">Ville</label>
+								<input type="text" name="city" class="form-control" value="{{ old('city') }}">
+								@error('city')<div class="text-danger small">{{ $message }}</div>@enderror
+							</div>
+						</div>
+						
+						<div class="row">
+							<div class="col-md-8 mb-3">
+								<label class="form-label">Adresse</label>
+								<input type="text" name="address" class="form-control" value="{{ old('address') }}">
+								@error('address')<div class="text-danger small">{{ $message }}</div>@enderror
+							</div>
+							<div class="col-md-4 mb-3">
+								<label class="form-label">Pays</label>
+								<select name="country" class="form-select">
+									<option value="">-- Sélectionner --</option>
+									<option value="Cameroun" {{ old('country') == 'Cameroun' ? 'selected' : 'selected' }}>Cameroun</option>
+									<option value="France" {{ old('country') == 'France' ? 'selected' : '' }}>France</option>
+									<option value="Belgique" {{ old('country') == 'Belgique' ? 'selected' : '' }}>Belgique</option>
+									<option value="Suisse" {{ old('country') == 'Suisse' ? 'selected' : '' }}>Suisse</option>
+									<option value="Canada" {{ old('country') == 'Canada' ? 'selected' : '' }}>Canada</option>
+									<option value="Sénégal" {{ old('country') == 'Sénégal' ? 'selected' : '' }}>Sénégal</option>
+									<option value="Côte d'Ivoire" {{ old('country') == "Côte d'Ivoire" ? 'selected' : '' }}>Côte d'Ivoire</option>
+									<option value="Mali" {{ old('country') == 'Mali' ? 'selected' : '' }}>Mali</option>
+									<option value="Burkina Faso" {{ old('country') == 'Burkina Faso' ? 'selected' : '' }}>Burkina Faso</option>
+									<option value="Bénin" {{ old('country') == 'Bénin' ? 'selected' : '' }}>Bénin</option>
+									<option value="Togo" {{ old('country') == 'Togo' ? 'selected' : '' }}>Togo</option>
+									<option value="Gabon" {{ old('country') == 'Gabon' ? 'selected' : '' }}>Gabon</option>
+									<option value="Congo" {{ old('country') == 'Congo' ? 'selected' : '' }}>Congo</option>
+									<option value="RDC" {{ old('country') == 'RDC' ? 'selected' : '' }}>RDC</option>
+									<option value="Maroc" {{ old('country') == 'Maroc' ? 'selected' : '' }}>Maroc</option>
+									<option value="Tunisie" {{ old('country') == 'Tunisie' ? 'selected' : '' }}>Tunisie</option>
+									<option value="Algérie" {{ old('country') == 'Algérie' ? 'selected' : '' }}>Algérie</option>
+									<option value="Madagascar" {{ old('country') == 'Madagascar' ? 'selected' : '' }}>Madagascar</option>
+									<option value="Autre" {{ old('country') == 'Autre' ? 'selected' : '' }}>Autre</option>
+								</select>
+								@error('country')<div class="text-danger small">{{ $message }}</div>@enderror
+							</div>
+						</div>
+						
+						<div class="row">
+							<div class="col-md-6 mb-3">
+								<label class="form-label">Couleur primaire</label>
+								<div class="input-group">
+									<input type="color" name="primary_color" class="form-control form-control-color" value="{{ old('primary_color', '#1a4b8c') }}">
+									<input type="text" class="form-control" value="{{ old('primary_color', '#1a4b8c') }}" readonly>
+								</div>
+								@error('primary_color')<div class="text-danger small">{{ $message }}</div>@enderror
+							</div>
+							<div class="col-md-6 mb-3">
+								<label class="form-label">Couleur secondaire</label>
+								<div class="input-group">
+									<input type="color" name="secondary_color" class="form-control form-control-color" value="{{ old('secondary_color', '#e19f32') }}">
+									<input type="text" class="form-control" value="{{ old('secondary_color', '#e19f32') }}" readonly>
+								</div>
+								@error('secondary_color')<div class="text-danger small">{{ $message }}</div>@enderror
+							</div>
+						</div>
+						
+						<hr class="my-4">
+						<h6 class="mb-3">Configuration Oracle (optionnel)</h6>
+						
+						<div class="row">
+							<div class="col-md-6 mb-3">
+								<label class="form-label">DSN Oracle</label>
+								<input type="text" name="oracle_dsn" class="form-control" value="{{ old('oracle_dsn') }}" placeholder="oracle://host:port/sid">
+								@error('oracle_dsn')<div class="text-danger small">{{ $message }}</div>@enderror
+							</div>
+							<div class="col-md-6 mb-3">
+								<label class="form-label">Nom d'utilisateur Oracle</label>
+								<input type="text" name="oracle_username" class="form-control" value="{{ old('oracle_username') }}">
+								@error('oracle_username')<div class="text-danger small">{{ $message }}</div>@enderror
+							</div>
+						</div>
+						
+						<div class="mb-3">
+							<label class="form-label">Mot de passe Oracle</label>
+							<input type="password" name="oracle_password" class="form-control" value="{{ old('oracle_password') }}">
+							@error('oracle_password')<div class="text-danger small">{{ $message }}</div>@enderror
+						</div>
+						
+						<div class="d-flex gap-2">
+							<button type="submit" class="btn btn-primary">
+								<i class="bi bi-check-lg me-2"></i>Créer l'hôtel
+							</button>
+							<a href="{{ route('super.hotels.index') }}" class="btn btn-outline-secondary">
+								<i class="bi bi-arrow-left me-2"></i>Annuler
+							</a>
+						</div>
+					</form>
+				</div>
+			</div>
+		</div>
+		<div class="col-md-4">
+			<div class="card border-0 shadow-sm">
+				<div class="card-header bg-transparent">
+					<h6 class="mb-0">Informations</h6>
+				</div>
+				<div class="card-body">
+					<div class="mb-3">
+						<strong>Création automatique</strong><br>
+						<small class="text-muted">Un administrateur sera créé automatiquement pour cet hôtel</small>
+					</div>
+					<div class="mb-3">
+						<strong>QR Code</strong><br>
+						<small class="text-muted">Un QR code sera généré pour le formulaire public</small>
+					</div>
+					<div class="mb-3">
+						<strong>Formulaire</strong><br>
+						<small class="text-muted">Un formulaire de pré-réservation sera configuré</small>
+					</div>
+					<div class="mb-3">
+						<strong>Synchronisation</strong><br>
+						<small class="text-muted">Les données seront synchronisées avec Oracle si configuré</small>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	
+	<script>
+		// Aperçu du logo
+		document.getElementById('logoInput').addEventListener('change', function(e) {
+			const file = e.target.files[0];
+			if (file) {
+				const reader = new FileReader();
+				reader.onload = function(e) {
+					const preview = document.getElementById('logoPreview');
+					const img = preview.querySelector('img');
+					img.src = e.target.result;
+					preview.classList.remove('d-none');
+				}
+				reader.readAsDataURL(file);
+			}
+		});
+	</script>
+</x-app-layout>
