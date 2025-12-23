@@ -30,6 +30,9 @@ return Application::configure(basePath: dirname(__DIR__))
         // Logger les activités sensibles pour les utilisateurs authentifiés
         $middleware->appendToGroup('web', \App\Http\Middleware\LogActivity::class);
         
+        // Valider les sessions utilisateur (doit être avant TrackUserSession)
+        $middleware->appendToGroup('web', \App\Http\Middleware\ValidateUserSession::class);
+        
         // Suivre les sessions utilisateur pour gérer les sessions multiples
         $middleware->appendToGroup('web', \App\Http\Middleware\TrackUserSession::class);
     })

@@ -202,10 +202,9 @@
 					<h6 class="mb-0">Actions</h6>
 				</div>
 				<div class="card-body">
-					<!-- Bouton Modifier (désactivé après check-in) -->
+					<!-- Bouton Modifier (uniquement si en attente) -->
 					@php
-						$statusService = new \App\Services\ReservationStatusService();
-						$canModify = $statusService->canBeModified($reservation);
+						$canModify = $reservation->status === 'pending';
 					@endphp
 					
 					@if($canModify)
@@ -216,7 +215,7 @@
 						</div>
 					@else
 						<div class="alert alert-info mb-2">
-							<small><i class="bi bi-lock me-1"></i>Les modifications sont verrouillées après le check-in pour des raisons de sécurité et de traçabilité.</small>
+							<small><i class="bi bi-lock me-1"></i>Les modifications sont verrouillées lorsque la réservation n'est plus en attente.</small>
 						</div>
 					@endif
 					

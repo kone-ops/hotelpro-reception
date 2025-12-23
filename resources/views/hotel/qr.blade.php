@@ -74,8 +74,8 @@
 		<div class="print-container">
 			<!-- En-tête avec logo et infos hôtel -->
 			<div class="print-header">
-				@if($hotel->logo)
-					<img src="{{ asset('storage/' . $hotel->logo) }}" alt="Logo {{ $hotel->name }}" class="print-logo">
+				@if($hotel->logo_url)
+					<img src="{{ $hotel->logo_url }}" alt="Logo {{ $hotel->name }}" class="print-logo">
 				@else
 					<div class="print-logo-placeholder">
 						<i class="bi bi-building"></i>

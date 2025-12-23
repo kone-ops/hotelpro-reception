@@ -6,6 +6,14 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ config('app.name', 'HotelPro') }}</title>
     
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="{{ asset('manifest.json') }}">
+    <meta name="theme-color" content="#1a4b8c">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Hotel Pro">
+    <link rel="apple-touch-icon" href="{{ asset('Template/logo.jpg') }}">
+    
     <!-- Bootstrap & Icons -->
     <link href="{{ asset('assets/vendor/bootstrap/bootstrap.min.css') }}" rel="stylesheet">
     <link href="{{ asset('assets/vendor/bootstrap-icons/bootstrap-icons.css') }}" rel="stylesheet">
@@ -1541,6 +1549,9 @@
                     cancelButtonColor: '#6c757d',
                     allowOutsideClick: true,
                     allowEscapeKey: true,
+                    backdrop: true,
+                    focusConfirm: false,
+                    focusCancel: true,
                     timer: 10000, // Auto-fermeture après 10 secondes
                     timerProgressBar: true
                 }).then((result) => {
@@ -1753,8 +1764,10 @@
                 showCancelButton: true,
                 cancelButtonText: 'Fermer',
                 cancelButtonColor: '#6c757d',
-                allowOutsideClick: false,
+                allowOutsideClick: true,
                 allowEscapeKey: true,
+                focusConfirm: false,
+                focusCancel: true,
                 timer: 15000, // 15 secondes pour chaque popup
                 timerProgressBar: true,
                 backdrop: true,
@@ -2204,15 +2217,6 @@
                 });
             }
             
-            // Gérer le redimensionnement avec debounce
-            let resizeTimer;
-            window.addEventListener('resize', function() {
-                clearTimeout(resizeTimer);
-                resizeTimer = setTimeout(function() {
-                    handleResponsiveSidebar();
-                }, 150);
-            });
-            
             // Initialiser au chargement
             handleResponsiveSidebar();
             
@@ -2236,7 +2240,7 @@
             if (topNavbar) observer.observe(topNavbar);
             if (mainContent) observer.observe(mainContent);
             
-            // Gérer le toggle manuel uniquement sur grands écrans
+            // Gérer le toggle manuel avec gestion correcte du redimensionnement
             const sidebarToggle = document.getElementById('sidebarToggle');
             if (sidebarToggle) {
                 // Supprimer tous les anciens gestionnaires d'événements
@@ -2247,29 +2251,70 @@
                     e.preventDefault();
                     e.stopPropagation();
                     
-                    // Toggle sur tous les écrans, mais avec comportement différent selon la taille
-                    if (window.innerWidth > 991) {
-                        // Sur grand écran : toggle manuel
+                    const currentWidth = window.innerWidth;
+                    const sidebarEl = document.getElementById('sidebar');
+                    
+                    if (currentWidth > 991) {
+                        // Sur grand écran : toggle collapsed/expanded
                         body.classList.toggle('sidebar-collapsed');
-                        // Sauvegarder la préférence
                         localStorage.setItem('sidebarCollapsed', body.classList.contains('sidebar-collapsed'));
+                        // S'assurer que la sidebar est visible
+                        if (sidebarEl) {
+                            sidebarEl.style.display = '';
+                        }
                     } else {
-                        // Sur petit écran : toggle pour afficher/masquer
-                        const sidebar = document.getElementById('sidebar');
-                        if (sidebar) {
-                            sidebar.style.display = sidebar.style.display === 'none' ? 'flex' : 'none';
+                        // Sur petit écran : toggle affichage/masquage
+                        if (sidebarEl) {
+                            const isHidden = sidebarEl.style.display === 'none' || 
+                                           (sidebarEl.style.display === '' && window.getComputedStyle(sidebarEl).display === 'none');
+                            sidebarEl.style.display = isHidden ? 'flex' : 'none';
+                            // Sauvegarder l'état pour petits écrans
+                            localStorage.setItem('sidebarMobileVisible', !isHidden);
                         }
                     }
                 });
             }
             
-            // Restaurer l'état de la sidebar si on est sur un grand écran
-            if (window.innerWidth > 991) {
-                const sidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
-                if (sidebarCollapsed) {
-                    body.classList.add('sidebar-collapsed');
+            // Fonction pour restaurer l'état de la sidebar selon la taille de l'écran
+            function restoreSidebarState() {
+                const width = window.innerWidth;
+                const sidebarEl = document.getElementById('sidebar');
+                
+                if (width > 991) {
+                    // Grand écran : restaurer l'état collapsed
+                    const sidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+                    if (sidebarCollapsed) {
+                        body.classList.add('sidebar-collapsed');
+                    } else {
+                        body.classList.remove('sidebar-collapsed');
+                    }
+                    // S'assurer que la sidebar est visible sur grand écran
+                    if (sidebarEl) {
+                        sidebarEl.style.display = '';
+                    }
+                } else {
+                    // Petit écran : restaurer l'état visible/masqué
+                    const sidebarMobileVisible = localStorage.getItem('sidebarMobileVisible') !== 'false';
+                    if (sidebarEl) {
+                        sidebarEl.style.display = sidebarMobileVisible ? 'flex' : 'none';
+                    }
+                    // Retirer la classe collapsed sur petits écrans
+                    body.classList.remove('sidebar-collapsed');
                 }
             }
+            
+            // Restaurer l'état au chargement
+            restoreSidebarState();
+            
+            // Gérer le redimensionnement de la fenêtre avec debounce (une seule déclaration de resizeTimer)
+            let resizeTimer;
+            window.addEventListener('resize', function() {
+                clearTimeout(resizeTimer);
+                resizeTimer = setTimeout(function() {
+                    handleResponsiveSidebar();
+                    restoreSidebarState();
+                }, 150);
+            });
             
             // Améliorer l'expérience tactile sur mobile
             if ('ontouchstart' in window) {
@@ -2286,6 +2331,20 @@
                 });
             }
         });
+    </script>
+    <!-- Service Worker Registration for PWA -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then((registration) => {
+                        console.log('Service Worker enregistré avec succès:', registration.scope);
+                    })
+                    .catch((error) => {
+                        console.log('Échec de l\'enregistrement du Service Worker:', error);
+                    });
+            });
+        }
     </script>
 </body>
 </html>

@@ -133,4 +133,21 @@ class UserController extends Controller
         $user->delete();
         return redirect()->route('super.users.index')->with('success', 'Utilisateur supprimé');
     }
+    
+    /**
+     * Supprimer plusieurs utilisateurs
+     */
+    public function destroyMultiple(Request $request)
+    {
+        $request->validate([
+            'user_ids' => 'required|array',
+            'user_ids.*' => 'required|exists:users,id',
+        ]);
+        
+        $userIds = $request->user_ids;
+        $count = User::whereIn('id', $userIds)->delete();
+        
+        return redirect()->route('super.users.index')
+            ->with('success', $count . ' utilisateur(s) supprimé(s) avec succès');
+    }
 }

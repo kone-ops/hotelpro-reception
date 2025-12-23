@@ -1,0 +1,51 @@
+{
+  "name": "hotelpro-desktop",
+  "version": "1.0.0",
+  "description": "Hotel Pro - Application Desktop pour Windows 11",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder",
+    "build-win": "electron-builder --win --x64"
+  },
+  "keywords": [
+    "hotel",
+    "management",
+    "desktop"
+  ],
+  "author": "Hotel Pro",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^28.0.0",
+    "electron-builder": "^24.9.1"
+  },
+  "build": {
+    "appId": "com.hotelpro.app",
+    "productName": "Hotel Pro",
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Hotel Pro"
+    },
+    "files": [
+      "main.js",
+      "offline.html",
+      "icon.ico",
+      "preload.js"
+    ]
+  }
+}
+

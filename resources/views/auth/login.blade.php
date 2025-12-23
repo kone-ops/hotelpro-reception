@@ -10,7 +10,7 @@
     <style>
         body {
             background: linear-gradient(135deg, #1a4b8c 0%, #2563a8 100%);
-            min-height: 100vh;
+            min-height: 80vh;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -213,19 +213,25 @@
                     </div>
 
                     <!-- Remember Me -->
-                    <div class="mb-3 d-flex justify-content-between align-items-center">
+                    <div class="mb-3">
                         <div class="form-check">
-                            <input id="remember_me" type="checkbox" class="form-check-input" name="remember">
-                            <label class="form-check-label" for="remember_me">
-                                Se souvenir de moi
+                            <input id="remember_device" type="checkbox" class="form-check-input" name="remember_device">
+                            <label class="form-check-label" for="remember_device">
+                                <i class="bi bi-shield-check me-1"></i>Se souvenir de cet appareil
                             </label>
+                            <small class="d-block text-muted ms-4" style="font-size: 0.85rem;">
+                                Cet appareil sera marqué comme de confiance et vous recevrez moins d'alertes de sécurité
+                            </small>
                         </div>
-                        @if (Route::has('password.request'))
+                    </div>
+
+                    @if (Route::has('password.request'))
+                        <div class="mb-3 text-end">
                             <a class="forgot-password" href="{{ route('password.request') }}">
                                 Mot de passe oublié ?
                             </a>
-                        @endif
-                    </div>
+                        </div>
+                    @endif
 
                     <button type="submit" class="btn btn-login">
                         <i class="bi bi-box-arrow-in-right me-2"></i>Se connecter

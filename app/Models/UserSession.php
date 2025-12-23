@@ -16,10 +16,32 @@ class UserSession extends Model
         'ip_address',
         'user_agent',
         'last_activity',
+        'device_name',
+        'device_type',
+        'browser',
+        'platform',
+        'country',
+        'city',
+        'region',
+        'latitude',
+        'longitude',
+        'is_trusted_device',
+        'device_fingerprint',
+        'is_suspicious',
+        'suspicious_reasons',
+        'first_seen_at',
+        'last_seen_at',
     ];
 
     protected $casts = [
         'last_activity' => 'datetime',
+        'first_seen_at' => 'datetime',
+        'last_seen_at' => 'datetime',
+        'is_trusted_device' => 'boolean',
+        'is_suspicious' => 'boolean',
+        'latitude' => 'decimal:8',
+        'longitude' => 'decimal:8',
+        'suspicious_reasons' => 'array',
     ];
 
     /**
@@ -33,8 +55,9 @@ class UserSession extends Model
     /**
      * Scope pour les sessions actives
      */
-    public function scopeActive($query, int $lifetimeMinutes = 4320)
+    public function scopeActive($query, ?int $lifetimeMinutes = null)
     {
+        $lifetimeMinutes = $lifetimeMinutes ?? config('session.lifetime', 4320);
         $expirationTime = now()->subMinutes($lifetimeMinutes);
         return $query->where('last_activity', '>', $expirationTime);
     }
@@ -42,12 +65,21 @@ class UserSession extends Model
     /**
      * Vérifier si la session est expirée
      */
-    public function isExpired(int $lifetimeMinutes = 4320): bool
+    public function isExpired(?int $lifetimeMinutes = null): bool
     {
         if (!$this->last_activity) {
             return true;
         }
         
+        $lifetimeMinutes = $lifetimeMinutes ?? config('session.lifetime', 4320);
         return $this->last_activity->lt(now()->subMinutes($lifetimeMinutes));
+    }
+
+    /**
+     * Vérifier si la session est valide (existe et n'est pas expirée)
+     */
+    public function isValid(): bool
+    {
+        return $this->exists && !$this->isExpired();
     }
 }

@@ -177,7 +177,7 @@
         <!-- En-tête -->
         <div class="header">
             <div class="header-left">
-                @if($reservation->hotel->logo)
+                @if($reservation->hotel->hasLogo())
                     @php
                         $logoPath = storage_path('app/public/' . $reservation->hotel->logo);
                         if (file_exists($logoPath)) {

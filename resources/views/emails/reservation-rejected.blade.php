@@ -129,7 +129,7 @@
         <div class="email-header">
             @if($reservation->hotel->logo_url)
             <div class="hotel-logo">
-                <img src="{{ asset('storage/' . $reservation->hotel->logo_url) }}" alt="{{ $reservation->hotel->name }}">
+                <img src="{{ $reservation->hotel->logo_url }}" alt="{{ $reservation->hotel->name }}">
             </div>
             @endif
             <h1>{{ $reservation->hotel->name }}</h1>

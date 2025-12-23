@@ -27,6 +27,7 @@ Route::middleware(['auth', 'role:super-admin'])->prefix('super')->name('super.')
     
     // Hotels management (via modals uniquement, pas de pages create/edit)
     Route::resource('hotels', \App\Http\Controllers\SuperAdmin\HotelController::class)->except(['create', 'edit']);
+    Route::post('hotels/delete-multiple', [\App\Http\Controllers\SuperAdmin\HotelController::class, 'destroyMultiple'])->name('hotels.destroy-multiple');
     Route::get('hotels/{hotel}/room-types', [\App\Http\Controllers\SuperAdmin\HotelController::class, 'getRoomTypes'])->name('hotels.room-types');
     
     // Hotel Design & Form Configuration
@@ -41,6 +42,7 @@ Route::middleware(['auth', 'role:super-admin'])->prefix('super')->name('super.')
     
     // Users management
     Route::resource('users', \App\Http\Controllers\SuperAdmin\UserController::class);
+    Route::post('users/delete-multiple', [\App\Http\Controllers\SuperAdmin\UserController::class, 'destroyMultiple'])->name('users.destroy-multiple');
     
     // Forms management (lecture seule - champs prédéfinis)
     Route::get('/forms', [\App\Http\Controllers\SuperAdmin\FormFieldController::class, 'index'])->name('forms.index');
@@ -48,6 +50,7 @@ Route::middleware(['auth', 'role:super-admin'])->prefix('super')->name('super.')
     // Reservations management
     Route::get('/reservations', [\App\Http\Controllers\SuperAdmin\ReservationController::class, 'index'])->name('reservations.index');
     Route::get('/reservations/{id}', [\App\Http\Controllers\SuperAdmin\ReservationController::class, 'show'])->name('reservations.show');
+    Route::post('/reservations/delete-multiple', [\App\Http\Controllers\SuperAdmin\ReservationController::class, 'destroyMultiple'])->name('reservations.destroy-multiple');
     // Route de gestion désactivée (champs prédéfinis selon cahier de charge)
     // Route::resource('forms', \App\Http\Controllers\SuperAdmin\FormFieldController::class);
     
@@ -76,6 +79,12 @@ Route::middleware(['auth', 'role:super-admin'])->prefix('super')->name('super.')
     Route::get('/ui-settings', [\App\Http\Controllers\Super\UiSettingController::class, 'index'])->name('ui-settings.index');
     Route::put('/ui-settings', [\App\Http\Controllers\Super\UiSettingController::class, 'update'])->name('ui-settings.update');
     Route::post('/ui-settings/reset', [\App\Http\Controllers\Super\UiSettingController::class, 'reset'])->name('ui-settings.reset');
+    
+    // Global Database Management (Purge globale)
+    Route::get('/database', [\App\Http\Controllers\SuperAdmin\DatabaseController::class, 'index'])->name('database.index');
+    Route::get('/database/export', [\App\Http\Controllers\SuperAdmin\DatabaseController::class, 'exportGlobal'])->name('database.export');
+    Route::post('/database/purge', [\App\Http\Controllers\SuperAdmin\DatabaseController::class, 'purgeGlobal'])->name('database.purge');
+    Route::post('/database/import', [\App\Http\Controllers\SuperAdmin\DatabaseController::class, 'importGlobal'])->name('database.import');
 });
 
 // Routes hotel - réservations accessibles aux réceptionnistes ET aux admins hotel
@@ -105,6 +114,7 @@ Route::middleware(['auth', 'role:hotel-admin', 'hotel.access'])->prefix('hotel')
     
     // Gestion des Chambres
     Route::resource('rooms', \App\Http\Controllers\HotelAdmin\RoomController::class);
+    Route::post('rooms/delete-multiple', [\App\Http\Controllers\HotelAdmin\RoomController::class, 'destroyMultiple'])->name('rooms.destroy-multiple');
     Route::get('/rooms-bulk/create', [\App\Http\Controllers\HotelAdmin\RoomController::class, 'bulkCreate'])->name('rooms.bulk-create');
     Route::post('/rooms-bulk/store', [\App\Http\Controllers\HotelAdmin\RoomController::class, 'bulkStore'])->name('rooms.bulk-store');
     Route::patch('/rooms/{room}/status', [\App\Http\Controllers\HotelAdmin\RoomController::class, 'updateStatus'])->name('rooms.update-status');
@@ -168,6 +178,12 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     // Route de suppression de compte désactivée
     // Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    
+    // Gestion des sessions utilisateur
+    Route::get('/sessions', [\App\Http\Controllers\UserSessionController::class, 'index'])->name('sessions.index');
+    Route::delete('/sessions/{sessionId}', [\App\Http\Controllers\UserSessionController::class, 'destroy'])->name('sessions.destroy');
+    Route::post('/sessions/{sessionId}/trust', [\App\Http\Controllers\UserSessionController::class, 'trust'])->name('sessions.trust');
+    Route::post('/sessions/destroy-others', [\App\Http\Controllers\UserSessionController::class, 'destroyOthers'])->name('sessions.destroy-others');
     
     // Page dédiée aux notifications
     Route::get('/notifications', [\App\Http\Controllers\NotificationController::class, 'index'])->name('notifications.index');

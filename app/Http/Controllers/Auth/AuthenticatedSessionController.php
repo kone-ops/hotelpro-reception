@@ -10,14 +10,17 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 use Illuminate\Support\Facades\Log;
+use App\Services\DeviceDetectionService;
 
 class AuthenticatedSessionController extends Controller
 {
     protected SessionManagerService $sessionManager;
+    protected DeviceDetectionService $deviceDetectionService;
 
-    public function __construct(SessionManagerService $sessionManager)
+    public function __construct(SessionManagerService $sessionManager, DeviceDetectionService $deviceDetectionService)
     {
         $this->sessionManager = $sessionManager;
+        $this->deviceDetectionService = $deviceDetectionService;
     }
 
     /**
@@ -38,12 +41,20 @@ class AuthenticatedSessionController extends Controller
         $user = Auth::user();
         $sessionId = $request->session()->getId();
 
-        // Enregistrer la nouvelle session
+        // Vérifier si l'utilisateur veut se souvenir de cet appareil
+        $rememberDevice = $request->boolean('remember_device', false);
+        
+        // Générer l'empreinte digitale de l'appareil
+        $deviceFingerprint = $this->generateDeviceFingerprint($request);
+
+        // Enregistrer la nouvelle session avec toutes les informations
         $this->sessionManager->registerSession(
             $user,
             $sessionId,
             $request->ip(),
-            $request->userAgent()
+            $request->userAgent(),
+            $rememberDevice,
+            $deviceFingerprint
         );
 
         $request->session()->regenerate();
@@ -54,16 +65,36 @@ class AuthenticatedSessionController extends Controller
             $user,
             $newSessionId,
             $request->ip(),
-            $request->userAgent()
+            $request->userAgent(),
+            $rememberDevice,
+            $deviceFingerprint
         );
+
+        // Si l'utilisateur veut se souvenir de l'appareil, marquer comme de confiance
+        if ($rememberDevice) {
+            $this->sessionManager->markAsTrustedDevice($user, $newSessionId);
+        }
 
         Log::info('Nouvelle session créée', [
             'user_id' => $user->id,
             'session_id' => $newSessionId,
             'ip' => $request->ip(),
+            'remember_device' => $rememberDevice,
         ]);
 
         return redirect()->intended(route('dashboard', absolute: false));
+    }
+
+    /**
+     * Générer l'empreinte digitale de l'appareil
+     */
+    protected function generateDeviceFingerprint(Request $request): string
+    {
+        return $this->deviceDetectionService->generateDeviceFingerprint(
+            $request->userAgent(),
+            $request->header('X-Screen-Resolution'),
+            $request->header('X-Timezone')
+        );
     }
 
     /**

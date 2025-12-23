@@ -52,8 +52,8 @@
                                 <div class="col-md-6 mb-4">
                                     <label class="form-label fw-bold">Logo de l'hôtel</label>
                                     <div class="mb-3">
-                                        @if($hotel->logo)
-                                            <img src="{{ asset('storage/' . $hotel->logo) }}" alt="Logo actuel" 
+                                        @if($hotel->logo_url)
+                                            <img src="{{ $hotel->logo_url }}" alt="Logo actuel" 
                                                  class="img-thumbnail" style="max-height: 150px; max-width: 200px;">
                                         @else
                                             <div class="border rounded p-3 text-center text-muted" style="height: 150px; display: flex; align-items: center; justify-content: center;">
@@ -101,8 +101,8 @@
                                     <label class="form-label fw-bold">Aperçu du design</label>
                                     <div class="border rounded p-4" style="background: linear-gradient(135deg, {{ $hotel->primary_color ?? '#1a4b8c' }} 0%, {{ $hotel->secondary_color ?? '#2563a8' }} 100%); color: white; min-height: 150px;">
                                         <div class="text-center">
-                                            @if($hotel->logo)
-                                                <img src="{{ asset('storage/' . $hotel->logo) }}" alt="Logo" 
+                                            @if($hotel->logo_url)
+                                                <img src="{{ $hotel->logo_url }}" alt="Logo" 
                                                      style="max-height: 60px; max-width: 120px; background: white; padding: 10px; border-radius: 8px; margin-bottom: 15px;">
                                             @endif
                                             <h4 class="mb-0">{{ $hotel->name }}</h4>

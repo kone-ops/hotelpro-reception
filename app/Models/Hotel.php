@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
 
 class Hotel extends Model
 {
@@ -16,6 +17,20 @@ class Hotel extends Model
         'settings' => 'array',
         'form_field_config' => 'array',
     ];
+    
+    /**
+     * Les accesseurs à ajouter automatiquement au tableau/JSON
+     */
+    protected $appends = ['logo_url'];
+    
+    /**
+     * Obtenir la clé de route (par défaut: id)
+     * Assure que Laravel utilise l'ID pour le route model binding
+     */
+    public function getRouteKeyName(): string
+    {
+        return 'id';
+    }
 
     public function users()
     {
@@ -92,5 +107,34 @@ class Hotel extends Model
     public function isFieldRequired(string $fieldName): bool
     {
         return $this->getFieldConfig($fieldName)['required'] ?? false;
+    }
+    
+    /**
+     * Obtenir l'URL complète du logo
+     * 
+     * @return string|null L'URL du logo ou null si le logo n'existe pas
+     */
+    public function getLogoUrlAttribute(): ?string
+    {
+        if (!$this->logo) {
+            return null;
+        }
+        
+        // Vérifier si le fichier existe dans le storage
+        if (Storage::disk('public')->exists($this->logo)) {
+            return asset('storage/' . $this->logo);
+        }
+        
+        return null;
+    }
+    
+    /**
+     * Vérifier si le logo existe
+     * 
+     * @return bool
+     */
+    public function hasLogo(): bool
+    {
+        return !empty($this->logo) && Storage::disk('public')->exists($this->logo);
     }
 }

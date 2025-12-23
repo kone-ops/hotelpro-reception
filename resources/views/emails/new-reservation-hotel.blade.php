@@ -147,8 +147,8 @@
     <div class="email-container">
         <!-- Header -->
         <div class="email-header">
-            @if(!empty($reservation->hotel->logo))
-                <img src="{{ asset('storage/' . $reservation->hotel->logo) }}" alt="{{ $reservation->hotel->name }}" class="hotel-logo">
+            @if($reservation->hotel->logo_url)
+                <img src="{{ $reservation->hotel->logo_url }}" alt="{{ $reservation->hotel->name }}" class="hotel-logo">
             @endif
             <h1>{{ $reservation->hotel->name }}</h1>
             @if($reservation->hotel->address)

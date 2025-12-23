@@ -1,0 +1,36 @@
+{
+  "name": "Hotel Pro - Gestion Hôtelière",
+  "short_name": "Hotel Pro",
+  "description": "Système de gestion hôtelière professionnel",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1a4b8c",
+  "theme_color": "#1a4b8c",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/Template/logo.jpg",
+      "sizes": "192x192",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/Template/logo.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["business", "productivity"],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Tableau de bord",
+      "short_name": "Dashboard",
+      "description": "Accéder au tableau de bord",
+      "url": "/dashboard",
+      "icons": [{ "src": "/Template/logo.jpg", "sizes": "96x96" }]
+    }
+  ]
+}
+

@@ -20,10 +20,10 @@
 				<div class="card-body">
 					<div class="row">
 						<div class="col-md-6">
-							@if($hotel->logo)
+							@if($hotel->logo_url)
 								<div class="mb-3">
 									<strong>Logo:</strong><br>
-									<img src="{{ asset('storage/' . $hotel->logo) }}" alt="Logo {{ $hotel->name }}" 
+									<img src="{{ $hotel->logo_url }}" alt="Logo {{ $hotel->name }}" 
 									     style="max-height: 80px; max-width: 150px; border-radius: 8px; border: 2px solid #e9ecef;">
 								</div>
 							@endif
@@ -359,8 +359,8 @@ function editHotel(hotelId) {
 			
 			// Afficher le logo actuel
 			const logoImg = document.getElementById('editCurrentLogo');
-			if (hotel.logo) {
-				logoImg.src = `/storage/${hotel.logo}`;
+			if (hotel.logo_url) {
+				logoImg.src = hotel.logo_url;
 				logoImg.classList.remove('d-none');
 			} else {
 				logoImg.classList.add('d-none');

@@ -103,8 +103,9 @@ class ReservationController extends Controller
             $reservation->room->updateStatus('occupied');
         }
         
-        // Envoyer un email de notification au client
+        // Envoyer un email de notification au client (synchrone - instantané)
         try {
+            $reservation->load(['hotel', 'room', 'roomType', 'identityDocument']);
             $clientEmail = $reservation->client_email;
             if ($clientEmail) {
                 Mail::to($clientEmail)->send(new ReservationValidated($reservation));
@@ -118,6 +119,17 @@ class ReservationController extends Controller
             Log::error('Erreur lors de l\'envoi de l\'email de validation', [
                 'reservation_id' => $reservation->id,
                 'error' => $e->getMessage(),
+            ]);
+        }
+        
+        // Générer la fiche de police (synchrone)
+        try {
+            $policeSheetService = app(\App\Services\PoliceSheetService::class);
+            $policeSheetService->generateAndStore($reservation);
+        } catch (\Exception $e) {
+            Log::error('Erreur génération fiche de police', [
+                'reservation_id' => $reservation->id,
+                'error' => $e->getMessage()
             ]);
         }
         
@@ -215,6 +227,14 @@ class ReservationController extends Controller
         $hotel = Auth::user()->hotel;
         
         $reservation = Reservation::where('hotel_id', $hotel->id)->findOrFail($id);
+
+        // Bloquer l'accès au formulaire si la réservation n'est pas en attente
+        if ($reservation->status !== 'pending') {
+            return redirect()->route('hotel.reservations.show', $reservation)
+                ->withErrors([
+                    'error' => 'Cette réservation est validée ou traitée et ne peut plus être modifiée.'
+                ]);
+        }
         
         $roomTypes = $hotel->roomTypes()
             ->where('is_available', true)
@@ -242,6 +262,13 @@ class ReservationController extends Controller
         $hotel = Auth::user()->hotel;
         
         $reservation = Reservation::where('hotel_id', $hotel->id)->findOrFail($id);
+
+        // Bloquer toute modification si le statut n'est pas "pending"
+        if ($reservation->status !== 'pending') {
+            return back()->withErrors([
+                'error' => 'Cette réservation est validée ou traitée et ne peut plus être modifiée.'
+            ]);
+        }
         
         // Validation des données
         $validated = $request->validate([

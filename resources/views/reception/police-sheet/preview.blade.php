@@ -23,8 +23,8 @@
                         <!-- En-tête -->
                         <div class="d-flex justify-content-between align-items-start mb-3 pb-2" style="border-bottom: 1px solid #000;">
                             <div style="flex: 1;">
-                                @if($reservation->hotel->logo)
-                                    <img src="{{ asset('storage/' . $reservation->hotel->logo) }}" alt="Logo" style="max-height: 30px; max-width: 80px; margin-bottom: 5px;" loading="lazy">
+                                @if($reservation->hotel->logo_url)
+                                    <img src="{{ $reservation->hotel->logo_url }}" alt="Logo" style="max-height: 30px; max-width: 80px; margin-bottom: 5px;" loading="lazy">
                                 @endif
                                 <div style="font-weight: bold; font-size: 10pt; margin-bottom: 2px;">{{ strtoupper($reservation->hotel->name) }}</div>
                                 <div style="font-size: 8pt; line-height: 1.2;">

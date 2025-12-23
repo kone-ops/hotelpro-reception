@@ -23,7 +23,7 @@ class DashboardController extends Controller
 				SUM(CASE WHEN status = "validated" THEN 1 ELSE 0 END) as validated,
 				SUM(CASE WHEN status = "rejected" THEN 1 ELSE 0 END) as rejected,
 				SUM(CASE WHEN status = "checked_in" THEN 1 ELSE 0 END) as checked_in,
-				SUM(CASE WHEN type_reservation = "Groupe" THEN 1 ELSE 0 END) as groups
+				SUM(CASE WHEN json_extract(data, "$.type_reservation") = "Groupe" THEN 1 ELSE 0 END) as groups
 			')
 			->first();
 		

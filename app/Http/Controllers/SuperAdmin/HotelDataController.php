@@ -14,6 +14,7 @@ use App\Models\PrintLog;
 use App\Models\ActivityLog;
 use App\Models\RoomType;
 use App\Models\Room;
+use App\Models\Client;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -701,27 +702,42 @@ class HotelDataController extends Controller
                 'user_id' => auth()->id(),
             ]);
 
-            // Récupérer les IDs des réservations
-            $reservationIds = Reservation::where('hotel_id', $hotel->id)->pluck('id');
+            // Récupérer les IDs des réservations AVANT de les supprimer
+            $reservationIds = Reservation::withoutGlobalScopes()->where('hotel_id', $hotel->id)->pluck('id')->toArray();
             
             $deleted = [];
 
-            // 1. Supprimer les signatures
+            // 1. Supprimer les signatures (seulement s'il y a des réservations)
             try {
-                $deleted['signatures'] = Signature::whereIn('reservation_id', $reservationIds)->delete();
+                if (!empty($reservationIds)) {
+                    $deleted['signatures'] = Signature::whereIn('reservation_id', $reservationIds)->delete();
+                } else {
+                    $deleted['signatures'] = 0;
+                }
             } catch (\Exception $e) {
                 $deleted['signatures'] = 0;
+                Log::warning('[HotelDataController] Erreur suppression signatures', ['error' => $e->getMessage()]);
             }
             
-            // 2. Supprimer les documents d'identité
+            // 2. Supprimer les documents d'identité (seulement s'il y a des réservations)
             try {
-                $deleted['identity_documents'] = IdentityDocument::whereIn('reservation_id', $reservationIds)->delete();
+                if (!empty($reservationIds)) {
+                    $deleted['identity_documents'] = IdentityDocument::whereIn('reservation_id', $reservationIds)->delete();
+                } else {
+                    $deleted['identity_documents'] = 0;
+                }
             } catch (\Exception $e) {
                 $deleted['identity_documents'] = 0;
+                Log::warning('[HotelDataController] Erreur suppression documents', ['error' => $e->getMessage()]);
             }
             
-            // 3. Supprimer TOUTES les réservations
-            $deleted['reservations'] = Reservation::where('hotel_id', $hotel->id)->delete();
+            // 3. Supprimer TOUTES les réservations (sans les scopes globaux)
+            try {
+                $deleted['reservations'] = Reservation::withoutGlobalScopes()->where('hotel_id', $hotel->id)->delete();
+            } catch (\Exception $e) {
+                $deleted['reservations'] = 0;
+                Log::warning('[HotelDataController] Erreur suppression réservations', ['error' => $e->getMessage()]);
+            }
             
             // 4. Supprimer TOUTES les chambres
             try {
@@ -758,29 +774,49 @@ class HotelDataController extends Controller
                 $deleted['form_fields'] = 0;
             }
             
-            // 9. Supprimer TOUS les utilisateurs (sauf super-admin)
-            $deleted['users'] = User::where('hotel_id', $hotel->id)
-                ->whereDoesntHave('roles', function($q) {
-                    $q->where('name', 'super-admin');
-                })
-                        ->delete();
+            // 9. Supprimer les clients de l'hôtel
+            try {
+                $deleted['clients'] = Client::where('hotel_id', $hotel->id)->delete();
+            } catch (\Exception $e) {
+                $deleted['clients'] = 0;
+                Log::warning('[HotelDataController] Erreur suppression clients', ['error' => $e->getMessage()]);
+            }
             
-            // 10. Supprimer les logs d'impression
+            // 10. Supprimer TOUS les utilisateurs (sauf super-admin)
+            try {
+                $deleted['users'] = User::where('hotel_id', $hotel->id)
+                    ->whereDoesntHave('roles', function($q) {
+                        $q->where('name', 'super-admin');
+                    })
+                    ->delete();
+            } catch (\Exception $e) {
+                $deleted['users'] = 0;
+                Log::warning('[HotelDataController] Erreur suppression utilisateurs', ['error' => $e->getMessage()]);
+            }
+            
+            // 11. Supprimer les logs d'impression
             try {
                 $deleted['print_logs'] = PrintLog::where('hotel_id', $hotel->id)->delete();
-                } catch (\Exception $e) {
-                    $deleted['print_logs'] = 0;
+            } catch (\Exception $e) {
+                $deleted['print_logs'] = 0;
+                Log::warning('[HotelDataController] Erreur suppression print_logs', ['error' => $e->getMessage()]);
             }
 
-            // 11. Supprimer les logs d'activité
-                try {
+            // 12. Supprimer les logs d'activité
+            try {
                 $deleted['activity_logs'] = ActivityLog::where('hotel_id', $hotel->id)->delete();
-                } catch (\Exception $e) {
-                    $deleted['activity_logs'] = 0;
+            } catch (\Exception $e) {
+                $deleted['activity_logs'] = 0;
+                Log::warning('[HotelDataController] Erreur suppression activity_logs', ['error' => $e->getMessage()]);
             }
 
-            // 12. Nettoyer le cache
-            Cache::forget('hotel.' . $hotel->id . '.*');
+            // 13. Nettoyer le cache
+            try {
+                Cache::forget('hotel.' . $hotel->id . '.*');
+                Cache::flush(); // Nettoyer tout le cache pour être sûr
+            } catch (\Exception $e) {
+                Log::warning('[HotelDataController] Erreur nettoyage cache', ['error' => $e->getMessage()]);
+            }
 
             DB::commit();
 
@@ -797,8 +833,25 @@ class HotelDataController extends Controller
                 ]);
             } catch (\Exception $e) {}
 
+            // Construire un message de résumé
+            $summary = [];
+            if (isset($deleted['reservations'])) $summary[] = "{$deleted['reservations']} réservations";
+            if (isset($deleted['signatures'])) $summary[] = "{$deleted['signatures']} signatures";
+            if (isset($deleted['identity_documents'])) $summary[] = "{$deleted['identity_documents']} documents d'identité";
+            if (isset($deleted['rooms'])) $summary[] = "{$deleted['rooms']} chambres";
+            if (isset($deleted['room_types'])) $summary[] = "{$deleted['room_types']} types de chambres";
+            if (isset($deleted['clients'])) $summary[] = "{$deleted['clients']} clients";
+            if (isset($deleted['users'])) $summary[] = "{$deleted['users']} utilisateurs";
+            if (isset($deleted['printers'])) $summary[] = "{$deleted['printers']} imprimantes";
+            if (isset($deleted['settings'])) $summary[] = "{$deleted['settings']} paramètres";
+            if (isset($deleted['form_fields'])) $summary[] = "{$deleted['form_fields']} champs de formulaire";
+            if (isset($deleted['print_logs'])) $summary[] = "{$deleted['print_logs']} logs d'impression";
+            if (isset($deleted['activity_logs'])) $summary[] = "{$deleted['activity_logs']} logs d'activité";
+            
+            $summaryText = !empty($summary) ? implode(', ', $summary) : "0 éléments";
+            
             return redirect()->route('super.hotel-data.show', $hotel)
-                ->with('success', "⚠️ Purge complète effectuée ! TOUTES les données supprimées : {$deleted['reservations']} réservations, {$deleted['rooms']} chambres, {$deleted['room_types']} types de chambres, {$deleted['users']} utilisateurs, {$deleted['printers']} imprimantes, {$deleted['settings']} paramètres. Total : {$totalDeleted} éléments.");
+                ->with('success', "⚠️ Purge complète effectuée ! TOUTES les données supprimées : {$summaryText}. Total : {$totalDeleted} éléments.");
 
         } catch (\Exception $e) {
             DB::rollBack();

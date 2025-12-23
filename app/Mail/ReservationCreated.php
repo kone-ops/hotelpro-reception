@@ -10,6 +10,7 @@ use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Queue\SerializesModels;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Str;
 
 class ReservationCreated extends Mailable
 {
@@ -58,7 +59,11 @@ class ReservationCreated extends Mailable
         $pdf->setPaper('a4', 'portrait');
         $pdf->setOption('enable-local-file-access', true);
         
-        $filename = 'reservation-' . str_pad($this->reservation->id, 7, '0', STR_PAD_LEFT) . '.pdf';
+        // Nom de fichier lisible : reservation-{nom-client}-{yyyy-mm-dd}.pdf
+        $clientName = $this->reservation->data['nom'] ?? $this->reservation->full_name ?? $this->reservation->nom ?? 'client';
+        $slug = Str::slug($clientName);
+        $date = now()->format('Y-m-d');
+        $filename = "reservation-{$slug}-{$date}.pdf";
         
         return [
             Attachment::fromData(fn () => $pdf->output(), $filename)

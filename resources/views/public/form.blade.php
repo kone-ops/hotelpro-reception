@@ -465,9 +465,9 @@
     <div class="form-container">
         <div class="form-card">
             <div class="form-header">
-                @if($hotel->logo)
+                @if($hotel->logo_url)
                     <div class="logo-container">
-                        <img src="{{ asset('storage/' . $hotel->logo) }}" alt="Logo {{ $hotel->name }}" class="hotel-logo" loading="lazy">
+                        <img src="{{ $hotel->logo_url }}" alt="Logo {{ $hotel->name }}" class="hotel-logo" loading="lazy">
                     </div>
                 @else
                     <div class="logo-icon">

@@ -156,6 +156,37 @@ class RoomController extends Controller
             ->route('hotel.rooms.index')
             ->with('success', 'Chambre supprimée avec succès !');
     }
+    
+    /**
+     * Supprimer plusieurs chambres
+     */
+    public function destroyMultiple(Request $request)
+    {
+        $hotel = Auth::user()->hotel;
+        
+        $request->validate([
+            'room_ids' => 'required|array',
+            'room_ids.*' => 'required|exists:rooms,id',
+        ]);
+        
+        // Vérifier que toutes les chambres appartiennent à l'hôtel
+        $roomIds = $request->room_ids;
+        $rooms = Room::whereIn('id', $roomIds)
+            ->where('hotel_id', $hotel->id)
+            ->get();
+        
+        $count = $rooms->count();
+        
+        if ($count !== count($roomIds)) {
+            return redirect()->route('hotel.rooms.index')
+                ->with('error', 'Certaines chambres n\'appartiennent pas à votre hôtel.');
+        }
+        
+        Room::whereIn('id', $roomIds)->delete();
+        
+        return redirect()->route('hotel.rooms.index')
+            ->with('success', $count . ' chambre(s) supprimée(s) avec succès');
+    }
 
     /**
      * Changer rapidement le statut d'une chambre (pour la réception et admin-hotel)

@@ -34,6 +34,7 @@
                                 <ul class="list-unstyled">
                                     <li class="nav-item"><a href="{{ route('super.hotels.index') }}" class="nav-link" data-name="Liste des hôtels" data-parent="Hôtels"><i class="bi bi-building"></i><span class="nav-text">Liste des hôtels</span></a></li>
                                     <li class="nav-item"><a href="{{ route('super.hotel-data.index') }}" class="nav-link" data-name="Données des hôtels" data-parent="Hôtels"><i class="bi bi-database"></i><span class="nav-text">Données des hôtels</span></a></li>
+                                    <li class="nav-item"><a href="{{ route('super.database.index') }}" class="nav-link" data-name="Gestion globale BD" data-parent="Hôtels"><i class="bi bi-database-fill"></i><span class="nav-text">Gestion globale BD</span></a></li>
                                     <li class="nav-item"><a href="{{ route('super.reservations.index') }}" class="nav-link" data-name="Réservations" data-parent="Hôtels"><i class="bi bi-calendar-check"></i><span class="nav-text">Réservations</span></a></li>
                                 </ul>
                             </div>

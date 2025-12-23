@@ -105,6 +105,14 @@ class ReservationController extends Controller
             ->where('hotel_id', $hotelId)
             ->findOrFail($id);
         
+        // Bloquer l'accès au formulaire si la réservation n'est pas en attente
+        if ($reservation->status !== 'pending') {
+            return redirect()->route('reception.reservations.show', $reservation->id)
+                ->withErrors([
+                    'error' => 'Cette réservation est validée ou traitée et ne peut plus être modifiée.'
+                ]);
+        }
+
         // Vérifier si la réservation peut être modifiée
         if (!$this->statusService->canBeModified($reservation)) {
             return redirect()->route('reception.reservations.show', $reservation->id)
@@ -134,6 +142,13 @@ class ReservationController extends Controller
         $hotelId = Auth::user()->hotel_id;
         
         $reservation = Reservation::where('hotel_id', $hotelId)->findOrFail($id);
+
+        // Bloquer toute modification si le statut n'est pas "pending"
+        if ($reservation->status !== 'pending') {
+            return back()->withErrors([
+                'error' => 'Cette réservation est validée ou traitée et ne peut plus être modifiée.'
+            ]);
+        }
         
         // Vérifier si la réservation peut être modifiée
         if (!$this->statusService->canBeModified($reservation)) {
@@ -364,6 +379,31 @@ class ReservationController extends Controller
             $reservation->room->update(['status' => 'occupied']);
         }
         
+        // Envoyer l'email de confirmation (synchrone - instantané)
+        try {
+            $reservation->load(['hotel', 'room', 'roomType', 'identityDocument']);
+            if ($reservation->client_email) {
+                \Illuminate\Support\Facades\Mail::to($reservation->client_email)
+                    ->send(new \App\Mail\ReservationValidated($reservation));
+            }
+        } catch (\Exception $e) {
+            Log::error('Erreur envoi email validation', [
+                'reservation_id' => $reservation->id,
+                'error' => $e->getMessage()
+            ]);
+        }
+        
+        // Générer la fiche de police (synchrone)
+        try {
+            $policeSheetService = app(\App\Services\PoliceSheetService::class);
+            $policeSheetService->generateAndStore($reservation);
+        } catch (\Exception $e) {
+            Log::error('Erreur génération fiche de police', [
+                'reservation_id' => $reservation->id,
+                'error' => $e->getMessage()
+            ]);
+        }
+        
         // Créer une notification
         try {
             $this->notificationService->notifyReservationValidated($reservation->fresh());
@@ -422,6 +462,20 @@ class ReservationController extends Controller
         // Libérer la chambre si elle était réservée
         if ($reservation->room_id && $reservation->room) {
                 $reservation->room->update(['status' => 'available']);
+        }
+        
+        // Envoyer l'email de rejet (synchrone - instantané)
+        try {
+            $reservation->load(['hotel']);
+            if ($reservation->client_email) {
+                \Illuminate\Support\Facades\Mail::to($reservation->client_email)
+                    ->send(new \App\Mail\ReservationRejected($reservation, $reason ?? ''));
+            }
+        } catch (\Exception $e) {
+            Log::error('Erreur envoi email rejet', [
+                'reservation_id' => $reservation->id,
+                'error' => $e->getMessage()
+            ]);
         }
         
         // Logger l'activité critique

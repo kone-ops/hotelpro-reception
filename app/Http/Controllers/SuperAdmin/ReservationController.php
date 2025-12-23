@@ -94,4 +94,23 @@ class ReservationController extends Controller
         
         return view('super.reservations.show', compact('reservation', 'formConfig'));
     }
+    
+    /**
+     * Supprimer plusieurs réservations
+     */
+    public function destroyMultiple(Request $request)
+    {
+        $request->validate([
+            'reservation_ids' => 'required|array',
+            'reservation_ids.*' => 'required|exists:reservations,id',
+        ]);
+        
+        $reservationIds = $request->reservation_ids;
+        $count = Reservation::withoutGlobalScopes()
+            ->whereIn('id', $reservationIds)
+            ->delete();
+        
+        return redirect()->route('super.reservations.index')
+            ->with('success', $count . ' réservation(s) supprimée(s) avec succès');
+    }
 }

@@ -20,8 +20,8 @@
 									@error('logo')<div class="text-danger small">{{ $message }}</div>@enderror
 								</div>
 								<div id="logoPreview">
-									@if($hotel->logo)
-										<img src="{{ asset('storage/' . $hotel->logo) }}" alt="Logo actuel" style="max-height: 80px; max-width: 150px; border-radius: 8px; border: 2px solid #e9ecef;">
+									@if($hotel->logo_url)
+										<img src="{{ $hotel->logo_url }}" alt="Logo actuel" style="max-height: 80px; max-width: 150px; border-radius: 8px; border: 2px solid #e9ecef;">
 									@else
 										<img src="" alt="Aperçu logo" class="d-none" style="max-height: 80px; max-width: 150px; border-radius: 8px; border: 2px solid #e9ecef;">
 									@endif

@@ -130,8 +130,8 @@
         <div class="form-card">
             <!-- En-tête -->
             <div class="form-header">
-                @if($hotel->logo)
-                    <img src="{{ asset('storage/' . $hotel->logo) }}" alt="{{ $hotel->name }}" class="hotel-logo">
+                @if($hotel->logo_url)
+                    <img src="{{ $hotel->logo_url }}" alt="{{ $hotel->name }}" class="hotel-logo">
                 @endif
                 <h1>{{ $hotel->name }}</h1>
                 <p class="mb-0">Formulaire de check-in express</p>

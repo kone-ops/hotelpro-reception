@@ -1,11 +1,59 @@
 <x-app-layout>
 	<x-slot name="header">Gestion des hôtels</x-slot>
 	
-	<div class="d-flex justify-content-between align-items-center mb-4">
+	<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
 		<h4 class="mb-0">Liste des hôtels</h4>
-		<button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createHotelModal">
-			<i class="bi bi-plus-lg me-2"></i>Nouvel hôtel
-		</button>
+		<div class="d-flex gap-2">
+			<button class="btn btn-danger" id="deleteMultipleBtn" style="display: none;">
+				<i class="bi bi-trash me-2"></i>Supprimer sélectionnés
+			</button>
+			<button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createHotelModal">
+				<i class="bi bi-plus-lg me-2"></i>Nouvel hôtel
+			</button>
+		</div>
+	</div>
+
+	<!-- Barre de recherche et filtres -->
+	<div class="card mb-4 border-0 shadow-sm">
+		<div class="card-body">
+			<form method="GET" action="{{ route('super.hotels.index') }}" id="searchForm">
+				<div class="row g-3">
+					<div class="col-md-6">
+						<label for="search" class="form-label">Rechercher</label>
+						<input type="text" class="form-control" id="search" name="search" 
+						       value="{{ request('search') }}" 
+						       placeholder="Nom, ville, pays, adresse...">
+					</div>
+					<div class="col-md-3">
+						<label for="sort_by" class="form-label">Trier par</label>
+						<select class="form-select" id="sort_by" name="sort_by">
+							<option value="name" {{ request('sort_by') == 'name' ? 'selected' : '' }}>Nom</option>
+							<option value="users_count" {{ request('sort_by') == 'users_count' ? 'selected' : '' }}>Nombre d'utilisateurs</option>
+							<option value="reservations_count" {{ request('sort_by') == 'reservations_count' ? 'selected' : '' }}>Nombre de réservations</option>
+						</select>
+					</div>
+					<div class="col-md-3">
+						<label for="sort_order" class="form-label">Ordre</label>
+						<select class="form-select" id="sort_order" name="sort_order">
+							<option value="asc" {{ request('sort_order') == 'asc' ? 'selected' : '' }}>Croissant</option>
+							<option value="desc" {{ request('sort_order') == 'desc' ? 'selected' : '' }}>Décroissant</option>
+						</select>
+					</div>
+				</div>
+				<div class="row mt-3">
+					<div class="col-12">
+						<button type="submit" class="btn btn-primary">
+							<i class="bi bi-search me-2"></i>Rechercher
+						</button>
+						@if(request('search') || request('sort_by') || request('sort_order'))
+						<a href="{{ route('super.hotels.index') }}" class="btn btn-outline-secondary">
+							<i class="bi bi-x-circle me-2"></i>Réinitialiser
+						</a>
+						@endif
+					</div>
+				</div>
+			</form>
+		</div>
 	</div>
 
 	<!-- Les notifications sont maintenant gérées globalement dans le layout -->
@@ -14,11 +62,15 @@
 		@forelse($hotels as $hotel)
 			<div class="col-md-6 col-lg-4 mb-4">
 				<div class="card border-0 shadow-sm h-100 hotel-card" data-hotel-id="{{ $hotel->id }}">
-					<div class="card-header bg-transparent d-flex justify-content-between align-items-center" 
+					<div class="card-header bg-transparent d-flex justify-content-between align-items-center position-relative" 
 						 style="background: linear-gradient(135deg, {{ $hotel->primary_color ?? '#1a4b8c' }} 0%, {{ $hotel->secondary_color ?? '#2563a8' }} 100%) !important; color: white;">
-						<div class="d-flex align-items-center gap-2">
-							@if($hotel->logo)
-								<img src="{{ asset('storage/' . $hotel->logo) }}" alt="Logo {{ $hotel->name }}" style="max-height: 30px; max-width: 50px; object-fit: contain; background: white; padding: 3px; border-radius: 5px;" loading="lazy">
+						<div class="form-check position-absolute" style="left: 10px; top: 50%; transform: translateY(-50%); z-index: 10;">
+							<input class="form-check-input hotel-checkbox" type="checkbox" value="{{ $hotel->id }}" id="hotel-{{ $hotel->id }}" style="background-color: white; border-color: white;">
+							<label class="form-check-label" for="hotel-{{ $hotel->id }}" style="display: none;"></label>
+						</div>
+						<div class="d-flex align-items-center gap-2" style="margin-left: 35px;">
+							@if($hotel->logo_url)
+								<img src="{{ $hotel->logo_url }}" alt="Logo {{ $hotel->name }}" style="max-height: 30px; max-width: 50px; object-fit: contain; background: white; padding: 3px; border-radius: 5px;" loading="lazy">
 							@endif
 							<h6 class="mb-0 text-white">{{ $hotel->name }}</h6>
 						</div>
@@ -862,8 +914,8 @@ function editHotel(hotelId) {
 			
 			// Afficher le logo actuel
 			const logoImg = document.getElementById('editCurrentLogo');
-			if (hotel.logo) {
-				logoImg.src = `/storage/${hotel.logo}`;
+			if (hotel.logo_url) {
+				logoImg.src = hotel.logo_url;
 				logoImg.classList.remove('d-none');
 			} else {
 				logoImg.classList.add('d-none');
@@ -1106,6 +1158,67 @@ function deleteHotel(hotelId, hotelName) {
 		form.submit();
 	}
 }
+
+// Gestion de la sélection multiple - Initialisation au chargement de la page
+document.addEventListener('DOMContentLoaded', function() {
+	const checkboxes = document.querySelectorAll('.hotel-checkbox');
+	const deleteMultipleBtn = document.getElementById('deleteMultipleBtn');
+
+	function updateDeleteButton() {
+		const checked = document.querySelectorAll('.hotel-checkbox:checked');
+		if (checked.length > 0 && deleteMultipleBtn) {
+			deleteMultipleBtn.style.display = 'block';
+			deleteMultipleBtn.innerHTML = `<i class="bi bi-trash me-2"></i>Supprimer ${checked.length} sélectionné(s)`;
+		} else if (deleteMultipleBtn) {
+			deleteMultipleBtn.style.display = 'none';
+		}
+	}
+
+	// Attacher les événements aux checkboxes
+	if (checkboxes.length > 0) {
+		checkboxes.forEach(checkbox => {
+			checkbox.addEventListener('change', updateDeleteButton);
+		});
+	}
+
+	// Suppression multiple
+	if (deleteMultipleBtn) {
+		deleteMultipleBtn.addEventListener('click', function() {
+			const checked = Array.from(document.querySelectorAll('.hotel-checkbox:checked'))
+				.map(cb => cb.value);
+			
+			if (checked.length === 0) {
+				alert('Aucun hôtel sélectionné');
+				return;
+			}
+
+			if (confirm(`Êtes-vous sûr de vouloir supprimer ${checked.length} hôtel(s) ? Cette action est irréversible et supprimera toutes les données associées.`)) {
+				const form = document.createElement('form');
+				form.method = 'POST';
+				form.action = '{{ route("super.hotels.destroy-multiple") }}';
+				
+				// Token CSRF
+				const csrfInput = document.createElement('input');
+				csrfInput.type = 'hidden';
+				csrfInput.name = '_token';
+				csrfInput.value = '{{ csrf_token() }}';
+				form.appendChild(csrfInput);
+
+				// IDs des hôtels
+				checked.forEach(id => {
+					const input = document.createElement('input');
+					input.type = 'hidden';
+					input.name = 'hotel_ids[]';
+					input.value = id;
+					form.appendChild(input);
+				});
+
+				document.body.appendChild(form);
+				form.submit();
+			}
+		});
+	}
+});
 </script>
 
 <style>

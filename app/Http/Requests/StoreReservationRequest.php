@@ -30,26 +30,9 @@ class StoreReservationRequest extends FormRequest
                 return;
             }
 
-            $clientService = app(ClientService::class);
-            
-            // Préparer les données pour la vérification des doublons
-            $data = [
-                'email' => $this->input('email'),
-                'telephone' => $this->input('telephone'),
-                'numero_piece_identite' => $this->input('numero_piece_identite'),
-            ];
-
-            // Vérifier les doublons
-            $duplicates = $clientService->checkDuplicates($hotel, $data);
-
-            if (!empty($duplicates)) {
-                foreach ($duplicates as $field => $duplicate) {
-                    $validator->errors()->add(
-                        $field,
-                        $duplicate['message'] . ' Veuillez utiliser un autre ' . ($field === 'email' ? 'email' : ($field === 'telephone' ? 'numéro de téléphone' : 'numéro de pièce d\'identité')) . ' ou contacter l\'hôtel.'
-                    );
-                }
-            }
+            // Désactivation du blocage sur doublons : le ClientService fusionnera
+            // automatiquement avec le client existant (même email/téléphone/pièce).
+            // Cela évite d'empêcher un client connu de refaire une réservation.
         });
     }
 

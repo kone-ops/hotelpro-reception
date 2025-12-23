@@ -6,19 +6,51 @@ use App\Http\Controllers\Controller;
 use App\Models\Hotel;
 use App\Models\User;
 use App\Models\FormField;
+use App\Models\Reservation;
+use App\Models\Signature;
+use App\Models\IdentityDocument;
+use App\Models\Printer;
+use App\Models\Setting;
+use App\Models\Room;
+use App\Models\RoomType;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class HotelController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $hotels = Hotel::withCount(['users', 'reservations'])
-            ->select('id', 'name', 'logo', 'address', 'city', 'country', 'primary_color', 'secondary_color')
-            ->orderBy('name')
-            ->get();
+        $query = Hotel::withCount(['users', 'reservations'])
+            ->select('id', 'name', 'logo', 'address', 'city', 'country', 'primary_color', 'secondary_color');
+
+        // Recherche
+        if ($request->has('search') && $request->search) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'LIKE', "%{$search}%")
+                  ->orWhere('city', 'LIKE', "%{$search}%")
+                  ->orWhere('country', 'LIKE', "%{$search}%")
+                  ->orWhere('address', 'LIKE', "%{$search}%");
+            });
+        }
+
+        // Tri
+        $sortBy = $request->get('sort_by', 'name');
+        $sortOrder = $request->get('sort_order', 'asc');
+        
+        if ($sortBy === 'users_count') {
+            $query->orderBy('users_count', $sortOrder);
+        } elseif ($sortBy === 'reservations_count') {
+            $query->orderBy('reservations_count', $sortOrder);
+        } else {
+            $query->orderBy($sortBy, $sortOrder);
+        }
+
+        $hotels = $query->get();
+        
         return view('super.hotels.index', compact('hotels'));
     }
 
@@ -26,7 +58,7 @@ class HotelController extends Controller
     {
         $data = $request->validate([
             'name' => 'required|string|max:255',
-            'logo' => 'nullable|image|mimes:jpeg,jpg,png,svg|max:2048',
+            'logo' => 'nullable|file|mimes:jpeg,jpg,png,svg|max:2048',
             'address' => 'nullable|string|max:500',
             'phone' => 'nullable|string|max:50',
             'email' => 'nullable|email|max:255',
@@ -112,7 +144,7 @@ class HotelController extends Controller
     {
         $data = $request->validate([
             'name' => 'required|string|max:255',
-            'logo' => 'nullable|image|mimes:jpeg,jpg,png,svg|max:2048',
+            'logo' => 'nullable|file|mimes:jpeg,jpg,png,svg|max:2048',
             'address' => 'nullable|string|max:500',
             'phone' => 'nullable|string|max:50',
             'email' => 'nullable|email|max:255',
@@ -132,6 +164,9 @@ class HotelController extends Controller
                 Storage::disk('public')->delete($hotel->logo);
             }
             $data['logo'] = $request->file('logo')->store('hotels/logos', 'public');
+        } else {
+            // Si aucun nouveau logo n'est fourni, retirer le champ du tableau pour conserver l'ancien
+            unset($data['logo']);
         }
 
         $hotel->update($data);
@@ -301,6 +336,88 @@ class HotelController extends Controller
                 'active' => true,
                 'options' => null,
             ]);
+        }
+    }
+
+    /**
+     * Supprimer plusieurs hôtels
+     */
+    public function destroyMultiple(Request $request)
+    {
+        $request->validate([
+            'hotel_ids' => 'required|array',
+            'hotel_ids.*' => 'exists:hotels,id',
+        ]);
+
+        try {
+            DB::beginTransaction();
+            
+            $hotelIds = $request->hotel_ids;
+            $deleted = 0;
+
+            foreach ($hotelIds as $hotelId) {
+                try {
+                    $hotel = Hotel::findOrFail($hotelId);
+                    
+                    // Récupérer les IDs des réservations avant de les supprimer
+                    $reservationIds = Reservation::withoutGlobalScopes()->where('hotel_id', $hotel->id)->pluck('id')->toArray();
+                    
+                    // Supprimer les signatures et documents d'identité
+                    if (!empty($reservationIds)) {
+                        Signature::whereIn('reservation_id', $reservationIds)->delete();
+                        IdentityDocument::whereIn('reservation_id', $reservationIds)->delete();
+                    }
+                    
+                    // Supprimer les réservations
+                    Reservation::withoutGlobalScopes()->where('hotel_id', $hotel->id)->delete();
+                    
+                    // Supprimer les autres données associées
+                    $hotel->rooms()->delete();
+                    $hotel->roomTypes()->delete();
+                    $hotel->formFields()->delete();
+                    
+                    // Supprimer les clients
+                    \App\Models\Client::where('hotel_id', $hotel->id)->delete();
+                    
+                    // Supprimer les imprimantes
+                    Printer::where('hotel_id', $hotel->id)->delete();
+                    
+                    // Supprimer les paramètres
+                    Setting::where('hotel_id', $hotel->id)->delete();
+                    
+                    // Supprimer les logs
+                    \App\Models\PrintLog::where('hotel_id', $hotel->id)->delete();
+                    \App\Models\ActivityLog::where('hotel_id', $hotel->id)->delete();
+                    
+                    // Supprimer les utilisateurs (sauf super-admin)
+                    $hotel->users()->whereDoesntHave('roles', function($q) {
+                        $q->where('name', 'super-admin');
+                    })->delete();
+                    
+                    // Supprimer l'hôtel
+                    $hotel->delete();
+                    $deleted++;
+                } catch (\Exception $e) {
+                    \Log::error('Erreur lors de la suppression de l\'hôtel ID: ' . $hotelId, [
+                        'error' => $e->getMessage(),
+                    ]);
+                    // Continuer avec les autres hôtels même en cas d'erreur
+                }
+            }
+
+            DB::commit();
+
+            return redirect()->route('super.hotels.index')
+                ->with('success', "✅ {$deleted} hôtel(s) supprimé(s) avec succès.");
+        } catch (\Exception $e) {
+            DB::rollBack();
+            
+            \Log::error('Erreur lors de la suppression multiple des hôtels', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            return redirect()->back()
+                ->with('error', 'Erreur lors de la suppression : ' . $e->getMessage());
         }
     }
 }

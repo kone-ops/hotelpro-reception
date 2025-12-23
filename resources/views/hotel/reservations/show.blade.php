@@ -46,12 +46,18 @@
 					<h6 class="mb-0"><i class="bi bi-lightning me-2"></i>Actions</h6>
 				</div>
 				<div class="card-body">
-					<!-- Bouton Modifier (toujours disponible) -->
-					<div class="d-grid mb-2">
-						<a href="{{ route('hotel.reservations.edit', $reservation) }}" class="btn btn-outline-primary">
-							<i class="bi bi-pencil-square me-2"></i>Modifier les informations
-						</a>
-					</div>
+					<!-- Bouton Modifier (uniquement si en attente) -->
+					@if($reservation->status === 'pending')
+						<div class="d-grid mb-2">
+							<a href="{{ route('hotel.reservations.edit', $reservation) }}" class="btn btn-outline-primary">
+								<i class="bi bi-pencil-square me-2"></i>Modifier les informations
+							</a>
+						</div>
+					@else
+						<div class="alert alert-info mb-2">
+							<small><i class="bi bi-lock me-1"></i>Les modifications sont verrouillées lorsque la réservation n'est plus en attente.</small>
+						</div>
+					@endif
 					
 					@if($reservation->status === 'pending')
 						<div class="d-grid gap-2">
