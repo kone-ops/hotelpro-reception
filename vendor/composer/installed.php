@@ -1,6 +1,6 @@
 <?php return array(
     'root' => array(
-        'name' => 'laravel/laravel',
+        'name' => 'phoenixgroup/hotelpro',
         'pretty_version' => '1.0.0+no-version-set',
         'version' => '1.0.0.0',
         'reference' => null,
@@ -454,15 +454,6 @@
             'aliases' => array(),
             'dev_requirement' => false,
         ),
-        'laravel/laravel' => array(
-            'pretty_version' => '1.0.0+no-version-set',
-            'version' => '1.0.0.0',
-            'reference' => null,
-            'type' => 'project',
-            'install_path' => __DIR__ . '/../../',
-            'aliases' => array(),
-            'dev_requirement' => false,
-        ),
         'laravel/pail' => array(
             'pretty_version' => 'v1.2.3',
             'version' => '1.2.3.0',
@@ -589,15 +580,6 @@
             'aliases' => array(),
             'dev_requirement' => false,
         ),
-        'mike42/escpos-php' => array(
-            'pretty_version' => 'v2.2',
-            'version' => '2.2.0.0',
-            'reference' => 'e5496cf819b048b11877117bd14a9cea4fb17c03',
-            'type' => 'library',
-            'install_path' => __DIR__ . '/../mike42/escpos-php',
-            'aliases' => array(),
-            'dev_requirement' => false,
-        ),
         'mockery/mockery' => array(
             'pretty_version' => '1.6.12',
             'version' => '1.6.12.0',
@@ -702,6 +684,15 @@
             'install_path' => __DIR__ . '/../phar-io/version',
             'aliases' => array(),
             'dev_requirement' => true,
+        ),
+        'phoenixgroup/hotelpro' => array(
+            'pretty_version' => '1.0.0+no-version-set',
+            'version' => '1.0.0.0',
+            'reference' => null,
+            'type' => 'project',
+            'install_path' => __DIR__ . '/../../',
+            'aliases' => array(),
+            'dev_requirement' => false,
         ),
         'phpoption/phpoption' => array(
             'pretty_version' => '1.9.4',

@@ -76,15 +76,15 @@
                 </div>
             @else
                 <div class="table-responsive">
-                    <table class="table table-hover mb-0">
+                    <table class="table table-sm table-hover table-striped align-middle mb-0 app-table" aria-label="Sessions actives">
                         <thead class="table-light">
                             <tr>
-                                <th>Appareil / Navigateur</th>
-                                <th>Localisation</th>
-                                <th>Adresse IP</th>
-                                <th>Dernière activité</th>
-                                <th>Statut</th>
-                                <th class="text-end">Actions</th>
+                                <th scope="col"><i class="bi bi-device-hdd me-1 text-muted"></i>Appareil / Navigateur</th>
+                                <th scope="col" class="d-none d-lg-table-cell"><i class="bi bi-geo-alt me-1 text-muted"></i>Localisation</th>
+                                <th scope="col" class="d-none d-md-table-cell"><i class="bi bi-hdd-network me-1 text-muted"></i>Adresse IP</th>
+                                <th scope="col"><i class="bi bi-clock me-1 text-muted"></i>Dernière activité</th>
+                                <th scope="col"><i class="bi bi-tag me-1 text-muted"></i>Statut</th>
+                                <th scope="col" class="text-end" style="width: 100px;">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -132,7 +132,7 @@
                                             <span class="text-muted">Localisation inconnue</span>
                                         @endif
                                     </td>
-                                    <td>
+                                    <td class="d-none d-md-table-cell">
                                         <code>{{ $session->ip_address ?? 'N/A' }}</code>
                                     </td>
                                     <td>

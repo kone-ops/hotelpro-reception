@@ -1,5 +1,5 @@
 <x-app-layout>
-	<x-slot name="header">Détails de la Réservation #{{ $reservation->id }}</x-slot>
+	<x-slot name="header">Détails de l'enregistrement #{{ $reservation->id }}</x-slot>
 	
 	<div class="row">
 		<div class="col-md-8">
@@ -115,16 +115,16 @@
 							<div class="col-md-12 mb-3">
 								<div class="border rounded p-3">
 									<h6>{{ ucfirst($reservation->identityDocument->type ?? 'Document') }}</h6>
-									@if($reservation->identityDocument->front_path)
+									@if($reservation->identityDocument->front_url)
 										<div class="mb-2">
 											<strong>Recto:</strong><br>
-											<img src="{{ asset('storage/' . $reservation->identityDocument->front_path) }}" class="img-fluid rounded" style="max-height: 200px;" loading="lazy" alt="Recto de la pièce d'identité">
+											<img src="{{ $reservation->identityDocument->front_url }}" class="img-fluid rounded" style="max-height: 200px;" loading="lazy" alt="Recto de la pièce d'identité">
 										</div>
 									@endif
-									@if($reservation->identityDocument->back_path)
+									@if($reservation->identityDocument->back_url)
 										<div class="mb-2">
 											<strong>Verso:</strong><br>
-											<img src="{{ asset('storage/' . $reservation->identityDocument->back_path) }}" class="img-fluid rounded" style="max-height: 200px;" loading="lazy" alt="Verso de la pièce d'identité">
+											<img src="{{ $reservation->identityDocument->back_url }}" class="img-fluid rounded" style="max-height: 200px;" loading="lazy" alt="Verso de la pièce d'identité">
 										</div>
 									@endif
 								</div>
@@ -215,7 +215,7 @@
 						</div>
 					@else
 						<div class="alert alert-info mb-2">
-							<small><i class="bi bi-lock me-1"></i>Les modifications sont verrouillées lorsque la réservation n'est plus en attente.</small>
+							<small><i class="bi bi-lock me-1"></i>Les modifications sont verrouillées lorsque l'enregistrement n'est plus en attente.</small>
 						</div>
 					@endif
 					
@@ -223,20 +223,20 @@
 						<div class="d-grid gap-2">
 							<form action="{{ route('reception.reservations.validate', $reservation->id) }}" method="POST">
 								@csrf
-								<button type="submit" class="btn btn-success w-100" onclick="return confirm('Valider cette pré-réservation ?')">
+								<button type="submit" class="btn btn-success w-100" onclick="return confirm('Valider ce pré-enregistrement ?')">
 									<i class="bi bi-check-lg me-2"></i>Valider
 								</button>
 							</form>
 							<form action="{{ route('reception.reservations.reject', $reservation->id) }}" method="POST">
 								@csrf
-								<button type="submit" class="btn btn-danger w-100" onclick="return confirm('Rejeter cette pré-réservation ?')">
+								<button type="submit" class="btn btn-danger w-100" onclick="return confirm('Rejeter ce pré-enregistrement ?')">
 									<i class="bi bi-x-lg me-2"></i>Rejeter
 								</button>
 							</form>
 						</div>
 					@elseif($reservation->status === 'validated')
 						<div class="d-grid gap-2">
-							{{-- Bouton Check-in : uniquement si réservation validée ET chambre assignée --}}
+							{{-- Bouton Check-in : uniquement si enregistrement validé ET chambre assignée --}}
 							@if($reservation->room_id)
 								<form action="{{ route('reception.reservations.check-in', $reservation->id) }}" method="POST">
 									@csrf
@@ -306,7 +306,7 @@
 						</div>
 					@elseif($reservation->status === 'rejected')
 						<div class="alert alert-danger">
-							<i class="bi bi-x-circle me-2"></i>Réservation rejetée (irréversible)
+							<i class="bi bi-x-circle me-2"></i>Enregistrement rejeté (irréversible)
 						</div>
 					@endif
 					

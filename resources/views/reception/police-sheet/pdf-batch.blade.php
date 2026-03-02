@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fiches de Police - Accompagnants Réservation #{{ $reservation->id }}</title>
+    <title>Fiches de Police - Accompagnants enregistrement #{{ $reservation->id }}</title>
     <style>
         @page { margin: 10mm; size: A5 portrait; }
         body { font-family: 'Courier New', monospace; font-size: 9pt; line-height: 1.2; margin: 0; padding: 0; color: #000; }

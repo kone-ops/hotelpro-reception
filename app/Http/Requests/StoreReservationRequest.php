@@ -119,17 +119,18 @@ class StoreReservationRequest extends FormRequest
             // Signature
             'signature' => $makeRule('signature', 'nullable|string'),
             
-            // Documents d'identité
-            'piece_identite_recto' => $formConfig && $formConfig->isRequired('piece_identite_recto') 
-                ? 'required_without:photo_recto|nullable|file|mimes:jpeg,jpg,png,pdf|max:5120'
-                : 'nullable|file|mimes:jpeg,jpg,png,pdf|max:5120',
-            'piece_identite_verso' => $formConfig && $formConfig->isRequired('piece_identite_verso')
-                ? 'required_without:photo_verso|nullable|file|mimes:jpeg,jpg,png,pdf|max:5120'
-                : 'nullable|file|mimes:jpeg,jpg,png,pdf|max:5120',
-            'photo_recto' => $formConfig && $formConfig->isRequired('piece_identite_recto')
+            // Documents d'identité (jpeg, jpg, png, webp, pdf - max 5 Mo)
+            // Exigés uniquement si le champ est visible ET requis (comme les autres champs via la config)
+            'piece_identite_recto' => ($formConfig && $formConfig->isVisible('piece_identite_recto') && $formConfig->isRequired('piece_identite_recto'))
+                ? 'required_without:photo_recto|nullable|file|mimes:jpeg,jpg,png,webp,pdf|max:5120'
+                : 'nullable|file|mimes:jpeg,jpg,png,webp,pdf|max:5120',
+            'piece_identite_verso' => ($formConfig && $formConfig->isVisible('piece_identite_verso') && $formConfig->isRequired('piece_identite_verso'))
+                ? 'required_without:photo_verso|nullable|file|mimes:jpeg,jpg,png,webp,pdf|max:5120'
+                : 'nullable|file|mimes:jpeg,jpg,png,webp,pdf|max:5120',
+            'photo_recto' => ($formConfig && $formConfig->isVisible('piece_identite_recto') && $formConfig->isRequired('piece_identite_recto'))
                 ? 'required_without:piece_identite_recto|nullable|string'
                 : 'nullable|string',
-            'photo_verso' => $formConfig && $formConfig->isRequired('piece_identite_verso')
+            'photo_verso' => ($formConfig && $formConfig->isVisible('piece_identite_verso') && $formConfig->isRequired('piece_identite_verso'))
                 ? 'required_without:piece_identite_verso|nullable|string'
                 : 'nullable|string',
             
@@ -191,8 +192,21 @@ class StoreReservationRequest extends FormRequest
                         break;
                     case 'select':
                     case 'radio':
-                        if ($field->options && count($field->options) > 0) {
-                            $baseRule[] = 'in:' . implode(',', $field->options);
+                        // Vérifier si options est un tableau, sinon le décoder depuis JSON
+                        $options = [];
+                        if (is_array($field->options)) {
+                            $options = $field->options;
+                        } elseif (is_string($field->options) && !empty($field->options)) {
+                            $decoded = json_decode($field->options, true);
+                            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                                $options = $decoded;
+                            }
+                        }
+                        
+                        if (!empty($options) && is_array($options)) {
+                            $baseRule[] = 'in:' . implode(',', array_map(function($opt) {
+                                return str_replace(',', '\\,', $opt); // Échapper les virgules dans les options
+                            }, $options));
                         } else {
                             $baseRule[] = 'string';
                         }
@@ -242,6 +256,8 @@ class StoreReservationRequest extends FormRequest
             'code_groupe.required' => 'Le code du groupe est obligatoire pour une réservation de groupe.',
             'piece_identite_recto.required_without' => 'Vous devez fournir une pièce d\'identité (recto) en téléchargeant un fichier ou en prenant une photo.',
             'photo_recto.required_without' => 'Vous devez fournir une pièce d\'identité (recto) en téléchargeant un fichier ou en prenant une photo.',
+            'piece_identite_verso.required_without' => 'Vous devez fournir une pièce d\'identité (verso) en téléchargeant un fichier ou en prenant une photo.',
+            'photo_verso.required_without' => 'Vous devez fournir une pièce d\'identité (verso) en téléchargeant un fichier ou en prenant une photo.',
         ];
     }
 

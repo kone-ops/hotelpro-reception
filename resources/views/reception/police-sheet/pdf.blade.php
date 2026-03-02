@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
     <meta charset="utf-8">
-    <title>Fiche de Réservation N°{{ str_pad($reservation->id, 7, '0', STR_PAD_LEFT) }}</title>
+    <title>Fiche d'enregistrement N°{{ str_pad($reservation->id, 7, '0', STR_PAD_LEFT) }}</title>
     <style>
         @page {
             size: A5;
@@ -179,10 +179,15 @@
             <div class="header-left">
                 @if($reservation->hotel->hasLogo())
                     @php
-                        $logoPath = storage_path('app/public/' . $reservation->hotel->logo);
-                        if (file_exists($logoPath)) {
-                            $logoData = base64_encode(file_get_contents($logoPath));
-                            $logoMime = mime_content_type($logoPath);
+                        $logoPath = $reservation->hotel->logo;
+                        // Compatibilité avec anciens chemins storage/
+                        if (strpos($logoPath, 'storage/') === 0 || strpos($logoPath, 'hotels/') === 0) {
+                            $logoPath = 'images/logos/' . basename($logoPath);
+                        }
+                        $fullLogoPath = public_path($logoPath);
+                        if (file_exists($fullLogoPath)) {
+                            $logoData = base64_encode(file_get_contents($fullLogoPath));
+                            $logoMime = mime_content_type($fullLogoPath);
                             $logoBase64 = 'data:' . $logoMime . ';base64,' . $logoData;
                         }
                     @endphp
@@ -321,7 +326,7 @@
             @endforeach
         </div>
         
-        <!-- Informations de réservation -->
+        <!-- Informations d'enregistrement -->
         <div class="info-section">
             <div class="info-row-2col">
                 <div class="info-col">

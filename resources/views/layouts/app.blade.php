@@ -12,7 +12,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Hotel Pro">
-    <link rel="apple-touch-icon" href="{{ asset('Template/logo.jpg') }}">
+    <link rel="apple-touch-icon" href="{{ asset('images/logo.jpg') }}">
     
     <!-- Bootstrap & Icons -->
     <link href="{{ asset('assets/vendor/bootstrap/bootstrap.min.css') }}" rel="stylesheet">
@@ -128,8 +128,8 @@
                 }
             @endphp
             --primary-blue: #1a4b8c;
-            --content-bg: #EBF2FA;
-            --text-dark: #2c3e50;
+            --content-bg: #f7f9fc;
+            --text-dark: #1e293b;
             --brand-yellow: #e19f32;
             --white: #ffffff;
             --light-gray: #f8f9fa;
@@ -140,24 +140,24 @@
             --sidebar-width-tablet: 70px;
             --sidebar-width-mobile: 60px;
             
-            /* Tailles d'icônes standardisées */
-            --icon-xs: 0.875rem;      /* 14px */
-            --icon-sm: 1rem;          /* 16px */
-            --icon-md: 1.25rem;       /* 20px */
-            --icon-lg: 1.5rem;        /* 24px */
-            --icon-xl: 2rem;          /* 32px */
-            --icon-xxl: 3rem;         /* 48px */
+            /* Icônes - optimal affichage: nav 14px, boutons 14–16px, stats 18px */
+            --icon-xs: 0.75rem;       /* 12px - badges */
+            --icon-sm: 0.875rem;      /* 14px - nav, boutons */
+            --icon-md: 1rem;         /* 16px - headers */
+            --icon-lg: 1.125rem;     /* 18px - cartes stats */
+            --icon-xl: 1.25rem;      /* 20px */
+            --icon-xxl: 1.5rem;      /* 24px */
         }
 
         [data-theme="dark"] {
-            --primary-blue: #8ab4f8;
-            --content-bg: #1a1a1a;
-            --text-dark: #e8eaed;
-            --brand-yellow: #fdd835;
-            --white: #1e1e1e;
-            --light-gray: #2d2d2d;
-            --border-color: #4a4a4a;
-            --card-bg: #2d2d2d;
+            --primary-blue: #7dd3fc;
+            --content-bg: #0f172a;
+            --text-dark: #e2e8f0;
+            --brand-yellow: #fcd34d;
+            --white: #1e293b;
+            --light-gray: #334155;
+            --border-color: #334155;
+            --card-bg: #1e293b;
         }
         
         /* Uniformisation des textes en mode sombre */
@@ -186,15 +186,15 @@
             color: var(--primary-blue);
         }
         
-        h1 { font-size: var(--font-size-h1, var(--font-size-3xl, 2.25rem)); }
-        h2 { font-size: var(--font-size-h2, var(--font-size-2xl, 1.875rem)); }
-        h3 { font-size: var(--font-size-h3, var(--font-size-xl, 1.5rem)); }
-        h4 { font-size: var(--font-size-h4, var(--font-size-lg, 1.25rem)); }
-        h5 { font-size: var(--font-size-h5, var(--font-size-md, 1.125rem)); }
-        h6 { font-size: var(--font-size-base, 1rem); }
+        h1 { font-size: var(--font-size-3xl); }
+        h2 { font-size: var(--font-size-2xl); }
+        h3 { font-size: var(--font-size-xl); }
+        h4 { font-size: var(--font-size-lg); }
+        h5 { font-size: var(--font-size-md); }
+        h6 { font-size: var(--font-size-base); }
         
         body {
-            font-size: var(--font-size-base, var(--font-size-base, 1rem));
+            font-size: var(--font-size-base);
         }
 
         .sidebar {
@@ -220,12 +220,12 @@
             top: 0;
             left: var(--sidebar-width);
             right: 0;
-            height: var(--topbar-height, 60px);
-            background-color: rgba(255, 255, 255, 0.7);
+            height: var(--topbar-height, 52px);
+            background-color: rgba(255, 255, 255, 0.85);
             -webkit-backdrop-filter: blur(8px);
             backdrop-filter: blur(8px);
             z-index: 1020;
-            padding: 0 var(--spacing-xl, 2rem);
+            padding: 0 var(--spacing-base, 1rem);
             border-bottom: 1px solid var(--border-color);
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
@@ -235,8 +235,8 @@
 
         .main-content {
             margin-left: var(--sidebar-width);
-            padding: var(--main-padding, var(--spacing-xl, 2rem));
-            padding-top: calc(var(--topbar-height, 60px) + var(--spacing-lg, 1.5rem));
+            padding: var(--main-padding, var(--spacing-base, 1rem));
+            padding-top: calc(var(--topbar-height, 52px) + var(--spacing-md, 0.75rem));
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
@@ -274,12 +274,12 @@
         .sidebar-brand {
             font-family: 'Playfair Display', serif;
             color: var(--brand-yellow);
-            font-size: var(--font-size-h2, var(--font-size-2xl, 1.875rem));
-            font-weight: 700;
+            font-size: var(--font-size-lg);
+            font-weight: 600;
             text-decoration: none;
         }
         .sidebar-toggle {
-            background: none; border: none; color: var(--white); font-size: 1.5rem; cursor: pointer;
+            background: none; border: none; color: var(--white); font-size: var(--icon-md); cursor: pointer;
         }
         [data-theme="dark"] .sidebar-toggle { color: var(--text-dark); }
 
@@ -323,10 +323,10 @@
             color: var(--white);
             display: flex;
             align-items: center;
-            gap: 0.75rem;
-            padding: 0.8rem 1rem;
-            margin: 0 1rem;
-            border-radius: 8px;
+            gap: 0.5rem;
+            padding: 0.5rem 0.75rem;
+            margin: 0 0.5rem;
+            border-radius: var(--radius-md, 6px);
             transition: all 0.3s ease;
             white-space: nowrap;
             text-decoration: none;
@@ -350,7 +350,7 @@
 
         .accordion-body { padding: 0; }
         .accordion-body .nav-link { 
-            padding-left: 2.5rem;
+            padding-left: 1.75rem;
             display: flex;
             align-items: center;
             gap: 0.75rem;
@@ -414,6 +414,33 @@
         .top-bar-icon:hover { background-color: var(--border-color); }
         [data-theme="dark"] .top-bar-icon { background-color: var(--white); color: var(--text-dark); }
         [data-theme="dark"] .top-bar-icon:hover { background-color: var(--light-gray); }
+        
+        /* Style pour le bouton de rafraîchissement actif */
+        #auto-refresh-toggle.active {
+            background-color: var(--primary-blue);
+            color: var(--white);
+        }
+        #auto-refresh-toggle.active:hover {
+            background-color: var(--primary-blue);
+            opacity: 0.9;
+        }
+        [data-theme="dark"] #auto-refresh-toggle.active {
+            background-color: var(--primary-blue);
+            color: var(--white);
+        }
+        [data-theme="dark"] #auto-refresh-toggle.active:hover {
+            background-color: var(--primary-blue);
+            opacity: 0.9;
+        }
+        
+        /* Animation de rotation pour l'icône de rafraîchissement */
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        #auto-refresh-toggle.refreshing #auto-refresh-icon {
+            animation: spin 1s linear infinite;
+        }
 
         .breadcrumb { background-color: transparent; padding: 0; margin-bottom: 1.5rem; }
         .breadcrumb-item a { text-decoration: none; color: var(--primary-blue); }
@@ -421,19 +448,19 @@
 
         .content-frame {
             background-color: var(--white);
-            padding: var(--content-frame-padding, var(--spacing-xl, 2rem));
-            border-radius: var(--radius-xl, 1rem);
-            box-shadow: var(--shadow-md, 0 4px 6px rgba(0,0,0,0.1));
+            padding: var(--content-frame-padding, var(--spacing-base, 1rem));
+            border-radius: var(--radius-xl, 0.875rem);
+            box-shadow: var(--shadow-sm, 0 1px 2px rgba(15,23,42,0.04));
             min-height: 70vh;
         }
         [data-theme="dark"] .content-frame { border: 1px solid var(--border-color); }
 
         .theme-switch {
-            position: fixed; bottom: 20px; right: 20px; width: 50px; height: 50px;
+            position: fixed; bottom: 16px; right: 16px; width: 40px; height: 40px;
             border-radius: 50%; background-color: var(--white); color: var(--primary-blue);
-            border: 1px solid var(--border-color); font-size: 1.5rem; display: flex;
+            border: 1px solid var(--border-color); font-size: var(--icon-md); display: flex;
             align-items: center; justify-content: center; cursor: pointer; z-index: 1100;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
         }
 
         .top-bar-icon .badge { pointer-events: none; }
@@ -463,7 +490,7 @@
             }
             .sidebar .nav-text,
             .sidebar .logo-text {
-                font-size: 0.85rem;
+                font-size: var(--font-size-sm);
             }
             .sidebar .nav-link,
             .sidebar .accordion-button {
@@ -718,16 +745,16 @@
                 display: inline-block !important;
                 visibility: visible !important;
                 opacity: 1 !important;
-                font-size: 1.25rem !important;
-                min-width: 1.25rem !important;
+                font-size: var(--icon-md) !important;
+                min-width: var(--icon-md) !important;
             }
             
             .accordion-body .nav-link .bi {
                 display: inline-block !important;
                 visibility: visible !important;
                 opacity: 1 !important;
-                font-size: 1.1rem !important;
-                margin-right: 0.5rem;
+                font-size: var(--icon-sm) !important;
+                margin-right: 0.35rem;
             }
         }
         
@@ -746,27 +773,27 @@
         }
         
         .icon-container.icon-sm {
+            width: 28px;
+            height: 28px;
+            padding: 4px;
+        }
+        
+        .icon-container.icon-md {
             width: 32px;
             height: 32px;
             padding: 6px;
         }
         
-        .icon-container.icon-md {
+        .icon-container.icon-lg {
             width: 40px;
             height: 40px;
             padding: 8px;
         }
         
-        .icon-container.icon-lg {
-            width: 56px;
-            height: 56px;
-            padding: 12px;
-        }
-        
         .icon-container.icon-xl {
-            width: 72px;
-            height: 72px;
-            padding: 16px;
+            width: 48px;
+            height: 48px;
+            padding: 10px;
         }
         
         /* Couleurs d'icônes */
@@ -858,22 +885,22 @@
         }
         
         .stat-card .stat-icon {
-            font-size: var(--icon-xxl);
+            font-size: var(--icon-xl);
             opacity: 0.15;
             position: absolute;
-            right: 1rem;
-            bottom: 1rem;
+            right: 0.75rem;
+            bottom: 0.75rem;
         }
         
         .stat-card .stat-value {
-            font-size: 2rem;
+            font-size: var(--font-size-xl);
             font-weight: 700;
             color: var(--primary-blue);
             margin-bottom: 0.25rem;
         }
         
         .stat-card .stat-label {
-            font-size: 0.875rem;
+            font-size: var(--font-size-sm);
             color: #6c757d;
             text-transform: uppercase;
             letter-spacing: 0.5px;
@@ -1053,12 +1080,12 @@
             </div>
         @endif
 
-        <nav aria-label="breadcrumb" class="d-flex align-items-center justify-content-between" style="margin-bottom: 1.5rem;">
-            <ol class="breadcrumb mb-0" id="breadcrumb-container" style="flex:1;">
+        <nav aria-label="breadcrumb" class="d-flex align-items-center justify-content-between mb-3">
+            <ol class="breadcrumb mb-0 flex-grow-1" id="breadcrumb-container">
                 <li class="breadcrumb-item"><a href="{{ route('dashboard') }}" aria-label="Accueil" title="Accueil"><i class="bi bi-house-door-fill"></i></a></li>
                 <li class="breadcrumb-item active" aria-current="page">{{ $header ?? 'Tableau de bord' }}</li>
             </ol>
-            <span id="page-title" class="mx-auto" style="font-size:1.2rem;font-weight:500;color:var(--primary-blue);flex:1;text-align:center;font-family:'Poppins',sans-serif;">
+            <span id="page-title" class="page-title mx-auto">
                 {{ $header ?? 'Tableau de bord' }}
             </span>
         </nav>
@@ -1510,6 +1537,21 @@
                             title = 'Attention requise';
                             confirmButtonColor = '#ffc107';
                             break;
+                        case 'area_created':
+                            icon = 'info';
+                            title = 'Nouvel espace';
+                            confirmButtonColor = '#0dcaf0';
+                            break;
+                        case 'area_state_updated':
+                            icon = 'info';
+                            title = 'État d\'espace modifié';
+                            confirmButtonColor = '#0dcaf0';
+                            break;
+                        case 'area_deleted':
+                            icon = 'warning';
+                            title = 'Espace supprimé';
+                            confirmButtonColor = '#ffc107';
+                            break;
                         case 'info':
                         default:
                             icon = 'info';
@@ -1522,8 +1564,8 @@
                 let actionText = '';
                 if (notification.message) {
                     const message = notification.message.toLowerCase();
-                    if (message.includes('nouvelle réservation') || message.includes('nouvelle demande')) {
-                        actionText = 'Vérifiez les nouvelles réservations en attente de validation.';
+                    if (message.includes('nouvel enregistrement') || message.includes('nouvelle demande')) {
+                        actionText = 'Vérifiez les nouveaux enregistrements en attente de validation.';
                     } else if (message.includes('arrivée') || message.includes('check-in')) {
                         actionText = 'Un client arrive aujourd\'hui. Préparez l\'accueil.';
                     } else if (message.includes('départ') || message.includes('check-out')) {
@@ -1586,6 +1628,7 @@
                 const icons = {
                     'success': 'bi-check-circle-fill',
                     'error': 'bi-x-circle-fill',
+                    'danger': 'bi-x-circle-fill',
                     'warning': 'bi-exclamation-triangle-fill',
                     'info': 'bi-info-circle-fill',
                 };
@@ -2063,16 +2106,20 @@
                 this.refreshTimer = null;
                 this.isRefreshing = false;
                 this.lastPageHash = null;
-                this.autoRefreshEnabled = false; // Désactivé par défaut pour améliorer les performances
+                // Vérifier si l'auto-refresh était activé dans localStorage
+                const savedState = localStorage.getItem('autoRefreshEnabled');
+                this.autoRefreshEnabled = savedState === 'true'; // Activer si sauvegardé, sinon désactivé par défaut
                 this.init();
             }
             
             init() {
-                // Démarrer le rafraîchissement automatique seulement si activé
-                // Désactivé par défaut pour améliorer les performances
-                // if (this.autoRefreshEnabled) {
-                //     this.startAutoRefresh();
-                // }
+                // Restaurer l'état depuis localStorage
+                this.updateToggleUI();
+                
+                // Démarrer le rafraîchissement automatique si activé
+                if (this.autoRefreshEnabled) {
+                    this.startAutoRefresh();
+                }
                 
                 // Rafraîchir quand la page redevient visible (seulement si activé)
                 document.addEventListener('visibilitychange', () => {
@@ -2080,6 +2127,45 @@
                         this.refreshPageData();
                     }
                 });
+                
+                // Écouter les clics sur le bouton toggle
+                const toggleBtn = document.getElementById('auto-refresh-toggle');
+                if (toggleBtn) {
+                    toggleBtn.addEventListener('click', () => {
+                        this.toggleAutoRefresh();
+                    });
+                }
+            }
+            
+            toggleAutoRefresh() {
+                this.autoRefreshEnabled = !this.autoRefreshEnabled;
+                localStorage.setItem('autoRefreshEnabled', this.autoRefreshEnabled.toString());
+                
+                if (this.autoRefreshEnabled) {
+                    this.startAutoRefresh();
+                } else {
+                    this.stopAutoRefresh();
+                }
+                
+                this.updateToggleUI();
+            }
+            
+            updateToggleUI() {
+                const toggleBtn = document.getElementById('auto-refresh-toggle');
+                const icon = document.getElementById('auto-refresh-icon');
+                const indicator = document.getElementById('auto-refresh-indicator');
+                
+                if (toggleBtn && icon) {
+                    if (this.autoRefreshEnabled) {
+                        toggleBtn.classList.add('active');
+                        toggleBtn.setAttribute('title', 'Auto-refresh activé (toutes les 60s)');
+                        if (indicator) indicator.style.display = 'block';
+                    } else {
+                        toggleBtn.classList.remove('active');
+                        toggleBtn.setAttribute('title', 'Auto-refresh désactivé');
+                        if (indicator) indicator.style.display = 'none';
+                    }
+                }
             }
             
             startAutoRefresh() {
@@ -2102,6 +2188,16 @@
                 
                 this.isRefreshing = true;
                 
+                // Afficher l'indicateur visuel et l'animation
+                const toggleBtn = document.getElementById('auto-refresh-toggle');
+                const indicator = document.getElementById('auto-refresh-indicator');
+                if (toggleBtn) {
+                    toggleBtn.classList.add('refreshing');
+                }
+                if (indicator) {
+                    indicator.style.display = 'block';
+                }
+                
                 try {
                     // Rafraîchir les statistiques si présentes
                     await this.refreshStatistics();
@@ -2109,7 +2205,7 @@
                     // Rafraîchir les tableaux DataTables
                     this.refreshDataTables();
                     
-                    // Rafraîchir les listes de réservations
+                    // Rafraîchir les listes d'enregistrements
                     await this.refreshReservations();
                     
                     // Rafraîchir les chambres si sur la page des chambres
@@ -2121,6 +2217,18 @@
                     console.error('Erreur lors du rafraîchissement:', error);
                 } finally {
                     this.isRefreshing = false;
+                    // Retirer l'animation
+                    if (toggleBtn) {
+                        toggleBtn.classList.remove('refreshing');
+                    }
+                    // Masquer l'indicateur après un court délai
+                    if (indicator) {
+                        setTimeout(() => {
+                            if (!this.isRefreshing) {
+                                indicator.style.display = 'none';
+                            }
+                        }, 500);
+                    }
                 }
             }
             
@@ -2166,7 +2274,7 @@
             }
             
             async refreshReservations() {
-                // Rafraîchir les listes de réservations si présentes
+                // Rafraîchir les listes d'enregistrements si présentes
                 if (window.location.pathname.includes('/reservations')) {
                     window.dispatchEvent(new CustomEvent('refreshReservations'));
                 }

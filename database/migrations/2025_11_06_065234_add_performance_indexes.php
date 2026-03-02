@@ -46,14 +46,16 @@ return new class extends Migration
             });
         }
 
-        // Activity logs indexes
-        if (Schema::hasTable('activity_logs')) {
+        // Activity logs indexes (uniquement si la table a les colonnes hotel_id et user_id)
+        if (Schema::hasTable('activity_logs')
+            && Schema::hasColumn('activity_logs', 'hotel_id')
+            && Schema::hasColumn('activity_logs', 'user_id')) {
             Schema::table('activity_logs', function (Blueprint $table) {
                 if (!$this->indexExists('activity_logs', 'idx_activity_logs_hotel_created')) {
-                $table->index(['hotel_id', 'created_at'], 'idx_activity_logs_hotel_created');
+                    $table->index(['hotel_id', 'created_at'], 'idx_activity_logs_hotel_created');
                 }
                 if (!$this->indexExists('activity_logs', 'idx_activity_logs_user_created')) {
-                $table->index(['user_id', 'created_at'], 'idx_activity_logs_user_created');
+                    $table->index(['user_id', 'created_at'], 'idx_activity_logs_user_created');
                 }
             });
         }
@@ -131,13 +133,15 @@ return new class extends Migration
             });
         }
 
-        if (Schema::hasTable('activity_logs')) {
+        if (Schema::hasTable('activity_logs')
+            && Schema::hasColumn('activity_logs', 'hotel_id')
+            && Schema::hasColumn('activity_logs', 'user_id')) {
             Schema::table('activity_logs', function (Blueprint $table) {
                 if ($this->indexExists('activity_logs', 'idx_activity_logs_hotel_created')) {
-                $table->dropIndex('idx_activity_logs_hotel_created');
+                    $table->dropIndex('idx_activity_logs_hotel_created');
                 }
                 if ($this->indexExists('activity_logs', 'idx_activity_logs_user_created')) {
-                $table->dropIndex('idx_activity_logs_user_created');
+                    $table->dropIndex('idx_activity_logs_user_created');
                 }
             });
         }

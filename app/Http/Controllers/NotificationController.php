@@ -20,6 +20,9 @@ class NotificationController extends Controller
         'reservation_validated',
         'reservation_validated_no_room',
         'check_in_no_room',
+        'area_created',
+        'area_state_updated',
+        'area_deleted',
     ];
 
     /**

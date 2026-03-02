@@ -135,15 +135,15 @@
         <div class="card-body p-0">
             @if($rooms->count() > 0)
                 <div class="table-responsive">
-                    <table class="table modern-table mb-0">
-                        <thead>
+                    <table class="table table-sm table-hover table-striped align-middle mb-0 modern-table app-table" aria-label="Liste des chambres">
+                        <thead class="table-light">
                             <tr>
-                                <th><i class="bi bi-hash"></i> Numéro</th>
-                                <th><i class="bi bi-door-open"></i> Type</th>
-                                <th><i class="bi bi-building"></i> Étage</th>
-                                <th><i class="bi bi-currency-euro"></i> Prix</th>
-                                <th><i class="bi bi-toggles"></i> Statut</th>
-                                <th class="text-end"><i class="bi bi-gear"></i> Actions</th>
+                                <th scope="col"><i class="bi bi-hash me-1 text-muted"></i>Numéro</th>
+                                <th scope="col"><i class="bi bi-door-open me-1 text-muted"></i>Type</th>
+                                <th scope="col" class="d-none d-md-table-cell"><i class="bi bi-building me-1 text-muted"></i>Étage</th>
+                                <th scope="col" class="d-none d-lg-table-cell"><i class="bi bi-currency-euro me-1 text-muted"></i>Prix</th>
+                                <th scope="col" class="table-cell-state"><i class="bi bi-toggles me-1 text-muted"></i>Statut</th>
+                                <th scope="col" class="text-end table-actions-cell" style="width: 140px;"><i class="bi bi-gear me-1 text-muted"></i>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -160,19 +160,19 @@
                                             <span>{{ $room->roomType->name }}</span>
                                         </div>
                                     </td>
-                                    <td>
+                                    <td class="d-none d-md-table-cell">
                                         @if($room->floor)
                                             <i class="bi bi-layers"></i> {{ $room->floor }}
                                         @else
                                             <span class="text-muted">—</span>
                                         @endif
                                     </td>
-                                    <td>
+                                    <td class="d-none d-lg-table-cell">
                                         <span class="badge bg-success">
                                             {{ number_format($room->roomType->price, 0, ',', ' ') }} FCFA
                                         </span>
                                     </td>
-                                    <td>
+                                    <td class="table-cell-state">
                                         <div class="dropdown">
                                             <button class="btn btn-sm dropdown-toggle
                                                 @if($room->status == 'available') btn-success
@@ -221,7 +221,7 @@
                                             </ul>
                                         </div>
                                     </td>
-                                    <td class="text-end">
+                                    <td class="text-end table-actions-cell">
                                         <div class="btn-group btn-group-sm">
                                             <a href="{{ route('hotel.rooms.edit', $room) }}" 
                                                class="btn btn-outline-warning"
@@ -251,21 +251,22 @@
                     {{ $rooms->appends(request()->query())->links() }}
                 </div>
             @else
-                <div class="text-center py-5">
-                    <div class="icon-container icon-xl bg-primary-soft mb-3 mx-auto" style="width: 80px; height: 80px;">
-                        <i class="bi bi-key icon-xxl"></i>
-                    </div>
-                    <h5 class="text-muted">Aucune chambre</h5>
-                    <p class="text-muted">Créez vos premières chambres pour commencer.</p>
-                    <div class="d-flex gap-2 justify-content-center">
-                        <a href="{{ route('hotel.rooms.bulk-create') }}" class="btn btn-success btn-modern">
-                            <i class="bi bi-magic"></i> Création Rapide en Lot
-                        </a>
-                        <a href="{{ route('hotel.rooms.create') }}" class="btn btn-primary btn-modern">
-                            <i class="bi bi-plus-circle"></i> Créer une Chambre
-                        </a>
-                    </div>
-                </div>
+                <x-super.empty-table
+                    icon="bi-key"
+                    title="Aucune chambre"
+                    message="Créez vos premières chambres pour commencer."
+                >
+                    <x-slot:action>
+                        <div class="d-flex gap-2 justify-content-center flex-wrap">
+                            <a href="{{ route('hotel.rooms.bulk-create') }}" class="btn btn-success btn-modern">
+                                <i class="bi bi-magic"></i> Création rapide en lot
+                            </a>
+                            <a href="{{ route('hotel.rooms.create') }}" class="btn btn-primary btn-modern">
+                                <i class="bi bi-plus-circle"></i> Créer une chambre
+                            </a>
+                        </div>
+                    </x-slot:action>
+                </x-super.empty-table>
             @endif
         </div>
     </div>

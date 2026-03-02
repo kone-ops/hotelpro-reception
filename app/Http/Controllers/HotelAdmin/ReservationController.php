@@ -6,24 +6,24 @@ use App\Http\Controllers\Controller;
 use App\Models\Reservation;
 use App\Models\RoomType;
 use App\Models\Room;
-use App\Mail\ReservationValidated;
-use App\Mail\ReservationRejected;
 use App\Services\NotificationService;
 use App\Services\ReservationStatusService;
+use App\Services\ClientNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
 
 class ReservationController extends Controller
 {
     protected NotificationService $notificationService;
     protected ReservationStatusService $statusService;
+    protected ClientNotificationService $clientNotificationService;
 
-    public function __construct(NotificationService $notificationService, ReservationStatusService $statusService)
+    public function __construct(NotificationService $notificationService, ReservationStatusService $statusService, ClientNotificationService $clientNotificationService)
     {
         $this->notificationService = $notificationService;
         $this->statusService = $statusService;
+        $this->clientNotificationService = $clientNotificationService;
     }
 
     public function index(Request $request)
@@ -103,20 +103,11 @@ class ReservationController extends Controller
             $reservation->room->updateStatus('occupied');
         }
         
-        // Envoyer un email de notification au client (synchrone - instantané)
+        // Envoyer les notifications client (email / SMS / WhatsApp selon config super-admin)
         try {
-            $reservation->load(['hotel', 'room', 'roomType', 'identityDocument']);
-            $clientEmail = $reservation->client_email;
-            if ($clientEmail) {
-                Mail::to($clientEmail)->send(new ReservationValidated($reservation));
-                
-                Log::info('Email de validation envoyé', [
-                    'reservation_id' => $reservation->id,
-                    'email' => $clientEmail,
-                ]);
-            }
+            $this->clientNotificationService->sendReservationValidated($reservation);
         } catch (\Exception $e) {
-            Log::error('Erreur lors de l\'envoi de l\'email de validation', [
+            Log::error('Erreur envoi notification validation client', [
                 'reservation_id' => $reservation->id,
                 'error' => $e->getMessage(),
             ]);
@@ -186,19 +177,11 @@ class ReservationController extends Controller
             $reservation->room->updateStatus('available');
         }
         
-        // Envoyer un email de notification au client
+        // Envoyer les notifications client (email / SMS / WhatsApp selon config super-admin)
         try {
-            $clientEmail = $reservation->client_email;
-            if ($clientEmail) {
-                Mail::to($clientEmail)->send(new ReservationRejected($reservation, $reason));
-                
-                Log::info('Email de rejet envoyé', [
-                    'reservation_id' => $reservation->id,
-                    'email' => $clientEmail,
-                ]);
-            }
+            $this->clientNotificationService->sendReservationRejected($reservation, $reason ?? '');
         } catch (\Exception $e) {
-            Log::error('Erreur lors de l\'envoi de l\'email de rejet', [
+            Log::error('Erreur envoi notification rejet client', [
                 'reservation_id' => $reservation->id,
                 'error' => $e->getMessage(),
             ]);

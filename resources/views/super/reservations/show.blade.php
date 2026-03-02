@@ -1,5 +1,5 @@
-﻿<x-app-layout>
-	<x-slot name="header">Détails Pré-réservation #{{ $reservation->id }}</x-slot>
+<x-app-layout>
+	<x-slot name="header">Détails Pré-enregistrement #{{ $reservation->id }}</x-slot>
 	
 	<div class="mb-3">
 		<a href="{{ route('super.reservations.index') }}" class="btn btn-outline-secondary">
@@ -99,16 +99,16 @@
 						</div>
 						
 						<div class="row">
-							@if($reservation->identityDocument->front_path)
+							@if($reservation->identityDocument->front_url)
 								<div class="col-md-6 mb-3">
 									<strong>Recto:</strong><br>
-									<img src="{{ asset('storage/' . $reservation->identityDocument->front_path) }}" class="img-fluid rounded border" alt="Recto">
+									<img src="{{ $reservation->identityDocument->front_url }}" class="img-fluid rounded border" alt="Recto">
 								</div>
 							@endif
-							@if($reservation->identityDocument->back_path)
+							@if($reservation->identityDocument->back_url)
 								<div class="col-md-6 mb-3">
 									<strong>Verso:</strong><br>
-									<img src="{{ asset('storage/' . $reservation->identityDocument->back_path) }}" class="img-fluid rounded border" alt="Verso">
+									<img src="{{ $reservation->identityDocument->back_url }}" class="img-fluid rounded border" alt="Verso">
 								</div>
 							@endif
 						</div>

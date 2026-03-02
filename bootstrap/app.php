@@ -24,6 +24,9 @@ return Application::configure(basePath: dirname(__DIR__))
             'log.activity' => \App\Http\Middleware\LogActivity::class,
         ]);
 
+        // Définir la langue de l'application (session / Accept-Language / défaut)
+        $middleware->append(\App\Http\Middleware\SetLocale::class);
+
         // Appliquer les headers de sécurité globalement
         $middleware->append(\App\Http\Middleware\SecurityHeaders::class);
         

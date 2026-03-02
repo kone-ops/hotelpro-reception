@@ -78,9 +78,21 @@ return [
     |
     */
 
-    'locale' => env('APP_LOCALE', 'en'),
+    /*
+    | Langue par défaut : français partout dans l'application.
+    */
+    'locale' => env('APP_LOCALE', 'fr'),
 
-    'fallback_locale' => env('APP_FALLBACK_LOCALE', 'en'),
+    /*
+    | En cas de clé de traduction manquante (ex. en anglais), afficher le français.
+    | Ainsi le français s'affiche partout sauf où l'utilisateur a choisi l'anglais et où la traduction EN existe.
+    */
+    'fallback_locale' => env('APP_FALLBACK_LOCALE', 'fr'),
+
+    /*
+    | Langues supportées (ordre d'affichage dans le sélecteur).
+    */
+    'supported_locales' => ['fr', 'en'],
 
     'faker_locale' => env('APP_FAKER_LOCALE', 'en_US'),
 

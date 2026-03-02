@@ -71,7 +71,9 @@ class FormConfigService
             return $defaults[$fieldKey] ?? true;
         }
         
-        return $this->config[$fieldKey]['visible'] ?? true;
+        $visible = $this->config[$fieldKey]['visible'] ?? true;
+        // S'assurer que toute valeur "falsy" (false, 0, "0") est bien considérée comme non visible
+        return $visible === true || $visible === 1 || $visible === '1';
     }
     
     /**

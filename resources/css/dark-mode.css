@@ -4,33 +4,33 @@
  */
 
 :root {
-    /* Couleurs mode clair (par défaut) */
+    /* Mode clair - fond gris clair, cartes blanches */
     --bg-primary: #ffffff;
-    --bg-secondary: #f8f9fa;
-    --bg-tertiary: #e9ecef;
-    --text-primary: #212529;
-    --text-secondary: #6c757d;
-    --border-color: #51575c;
-    --shadow: rgba(0, 0, 0, 0.1);
-    --card-bg: #8d8585;
+    --bg-secondary: #f7f9fc;
+    --bg-tertiary: #eef1f6;
+    --text-primary: #1e293b;
+    --text-secondary: #64748b;
+    --border-color: #e2e8f0;
+    --shadow: rgba(15, 23, 42, 0.06);
+    --card-bg: #ffffff;
     --input-bg: #ffffff;
-    --input-border: #ced4da;
-    --hover-bg: #f8f9fa;
+    --input-border: #e2e8f0;
+    --hover-bg: #f1f5f9;
 }
 
 [data-theme="dark"] {
-    /* Couleurs mode sombre */
-    --bg-primary: #1a1d23;
-    --bg-secondary: #242831;
-    --bg-tertiary: #2d3139;
-    --text-primary: #e8eaed;
-    --text-secondary: #bdc1c6;
-    --border-color: #495057;
-    --shadow: rgba(0, 0, 0, 0.3);
-    --card-bg: #242831;
-    --input-bg: #2d3139;
-    --input-border: #495057;
-    --hover-bg: #2d3139;
+    /* Mode sombre - fond navy, cartes légèrement plus claires */
+    --bg-primary: #0f172a;
+    --bg-secondary: #1e293b;
+    --bg-tertiary: #334155;
+    --text-primary: #e2e8f0;
+    --text-secondary: #94a3b8;
+    --border-color: #334155;
+    --shadow: rgba(0, 0, 0, 0.2);
+    --card-bg: #1e293b;
+    --input-bg: #1e293b;
+    --input-border: #475569;
+    --hover-bg: #334155;
 }
 
 /* Application globale */
@@ -351,33 +351,35 @@ body {
     background: #495057;
 }
 
-/* Bouton de toggle thème */
-#theme-toggle {
+/* Bouton de toggle thème - compact, pas de gradient */
+#theme-toggle,
+.theme-switch {
     position: fixed;
-    bottom: 20px;
-    right: 20px;
-    width: 44px;
-    height: 44px;
+    bottom: 16px;
+    right: 16px;
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background-color: var(--primary-blue, #1a4b8c);
     color: white;
-    border: none;
-    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--border-color);
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
     cursor: pointer;
-    transition: all 0.3s ease;
-    z-index: 1000;
+    transition: background-color 0.2s ease, box-shadow 0.2s ease;
+    z-index: 1100;
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
-#theme-toggle:hover {
-    transform: scale(1.08);
-    box-shadow: 0 5px 18px rgba(0, 0, 0, 0.3);
+#theme-toggle:hover,
+.theme-switch:hover {
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.12);
 }
 
-#theme-toggle i {
-    font-size: 1.25rem;
+#theme-toggle i,
+.theme-switch i {
+    font-size: 0.875rem;
 }
 
 /* Animations de transition */

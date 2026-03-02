@@ -69,15 +69,15 @@
 				<div class="card-body">
 					@if($hotels_stats->count() > 0)
 						<div class="table-responsive">
-							<table id="hotelsStatsTable" class="table table-hover">
-								<thead>
+							<table id="hotelsStatsTable" class="table table-sm table-hover table-striped align-middle mb-0 super-admin-table" aria-label="Statistiques par hôtel : utilisateurs, enregistrements, taux">
+								<thead class="table-light">
 									<tr>
-										<th>Hôtel</th>
-										<th>Utilisateurs</th>
-										<th>Total réservations</th>
-										<th>Validées</th>
-										<th>En attente</th>
-										<th>Taux</th>
+										<th scope="col"><i class="bi bi-building me-1 text-primary"></i>Hôtel</th>
+										<th scope="col" class="text-center"><i class="bi bi-people me-1 text-primary"></i>Utilisateurs</th>
+										<th scope="col" class="text-center"><i class="bi bi-calendar-check me-1 text-primary"></i>Total enregistrements</th>
+										<th scope="col" class="text-center"><i class="bi bi-check-circle me-1 text-primary"></i>Validées</th>
+										<th scope="col" class="text-center"><i class="bi bi-clock me-1 text-primary"></i>En attente</th>
+										<th scope="col" class="text-center"><i class="bi bi-percent me-1 text-primary"></i>Taux</th>
 									</tr>
 								</thead>
 								<tbody>
@@ -111,11 +111,11 @@
 							</table>
 						</div>
 					@else
-						<div class="text-center py-4">
-							<i class="bi bi-building text-muted" style="font-size: 3rem;"></i>
-							<h5 class="text-muted mt-3">Aucun hôtel</h5>
-							<p class="text-muted">Créez votre premier hôtel pour voir les statistiques.</p>
-						</div>
+						<x-super.empty-table
+							icon="bi-building"
+							title="Aucun hôtel"
+							message="Créez votre premier hôtel pour voir les statistiques."
+						/>
 					@endif
 				</div>
 			</div>

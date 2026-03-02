@@ -2,20 +2,23 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\File;
 
 class Hotel extends Model
 {
+    use HasFactory;
     protected $fillable = [
         'name', 'logo', 'address', 'phone', 'email', 'city', 'country', 
         'primary_color', 'secondary_color', 'oracle_dsn', 
-        'oracle_username', 'oracle_password', 'public_form_url', 'settings', 'form_field_config'
+        'oracle_username', 'oracle_password', 'public_form_url', 'settings', 'form_field_config', 'notification_settings'
     ];
 
     protected $casts = [
         'settings' => 'array',
         'form_field_config' => 'array',
+        'notification_settings' => 'array',
     ];
     
     /**
@@ -69,46 +72,22 @@ class Hotel extends Model
     {
         return $this->hasMany(Room::class);
     }
-    
-    /**
-     * Obtenir la configuration d'un champ du formulaire
-     */
-    public function getFieldConfig(string $fieldName): array
+
+    public function panneCategories()
     {
-        $config = $this->form_field_config ?? [];
-        
-        // Configuration par défaut si non définie
-        $defaults = [
-            'signature' => ['visible' => true, 'required' => true],
-            'identity_document' => ['visible' => true, 'required' => false],
-            'identity_document_front' => ['visible' => true, 'required' => false],
-            'identity_document_back' => ['visible' => true, 'required' => false],
-            'document_delivery_date' => ['visible' => true, 'required' => false],
-            'document_delivery_place' => ['visible' => true, 'required' => false],
-            'profession' => ['visible' => true, 'required' => true],
-            'address' => ['visible' => true, 'required' => false],
-            'nationality' => ['visible' => true, 'required' => true],
-        ];
-        
-        return $config[$fieldName] ?? ($defaults[$fieldName] ?? ['visible' => true, 'required' => false]);
+        return $this->hasMany(PanneCategory::class, 'hotel_id');
     }
-    
-    /**
-     * Vérifier si un champ est visible
-     */
-    public function isFieldVisible(string $fieldName): bool
+
+    public function panneTypes()
     {
-        return $this->getFieldConfig($fieldName)['visible'] ?? true;
+        return $this->hasMany(PanneType::class, 'hotel_id');
     }
-    
-    /**
-     * Vérifier si un champ est obligatoire
-     */
-    public function isFieldRequired(string $fieldName): bool
+
+    public function pannes()
     {
-        return $this->getFieldConfig($fieldName)['required'] ?? false;
+        return $this->hasMany(Panne::class, 'hotel_id');
     }
-    
+
     /**
      * Obtenir l'URL complète du logo
      * 
@@ -120,9 +99,16 @@ class Hotel extends Model
             return null;
         }
         
-        // Vérifier si le fichier existe dans le storage
-        if (Storage::disk('public')->exists($this->logo)) {
-            return asset('storage/' . $this->logo);
+        // Nettoyer le chemin (compatibilité avec anciens chemins storage/)
+        $cleanPath = $this->logo;
+        if (strpos($cleanPath, 'storage/') === 0) {
+            $cleanPath = str_replace('storage/', 'images/', $cleanPath);
+        }
+        
+        // Vérifier si le fichier existe
+        $fullPath = public_path($cleanPath);
+        if (File::exists($fullPath)) {
+            return asset($cleanPath);
         }
         
         return null;
@@ -135,6 +121,91 @@ class Hotel extends Model
      */
     public function hasLogo(): bool
     {
-        return !empty($this->logo) && Storage::disk('public')->exists($this->logo);
+        if (!$this->logo) {
+            return false;
+        }
+        
+        // Nettoyer le chemin (compatibilité avec anciens chemins storage/)
+        $cleanPath = $this->logo;
+        if (strpos($cleanPath, 'storage/') === 0) {
+            $cleanPath = str_replace('storage/', 'images/', $cleanPath);
+        }
+        
+        return File::exists(public_path($cleanPath));
+    }
+
+    /**
+     * Configuration des notifications client (email, SMS, WhatsApp) avec valeurs par défaut.
+     * Si null ou vide : email activé avec templates système par défaut.
+     */
+    public function getNotificationConfig(): array
+    {
+        $stored = $this->notification_settings ?? [];
+        if (!is_array($stored)) {
+            $stored = [];
+        }
+
+        $emailEvents = ['created', 'validated', 'rejected', 'check_in', 'check_out'];
+        $defaults = [
+            'email' => [
+                'enabled' => true,
+                'from_name' => null,
+                'templates' => [
+                    'created' => ['subject' => '', 'body_html' => '', 'use_system_default' => true],
+                    'validated' => ['subject' => '', 'body_html' => '', 'use_system_default' => true],
+                    'rejected' => ['subject' => '', 'body_html' => '', 'use_system_default' => true],
+                    'check_in' => ['subject' => '', 'body_html' => '', 'use_system_default' => true],
+                    'check_out' => ['subject' => '', 'body_html' => '', 'use_system_default' => true],
+                ],
+            ],
+            'sms' => [
+                'enabled' => false,
+                'api_key' => '',
+                'sender' => '',
+                'templates' => [
+                    'created' => '',
+                    'validated' => '',
+                    'rejected' => '',
+                    'check_in' => '',
+                    'check_out' => '',
+                ],
+            ],
+            'whatsapp' => [
+                'enabled' => false,
+                'api_key' => '',
+                'phone_number_id' => '',
+                'sender_number' => '',
+                'sender_name' => '',
+                'templates' => [
+                    'created' => '',
+                    'validated' => '',
+                    'rejected' => '',
+                    'check_in' => '',
+                    'check_out' => '',
+                ],
+            ],
+        ];
+
+        foreach (['email', 'sms', 'whatsapp'] as $channel) {
+            $defaults[$channel] = array_merge(
+                $defaults[$channel],
+                $stored[$channel] ?? []
+            );
+            if ($channel === 'email' && isset($stored[$channel]['templates'])) {
+                foreach ($emailEvents as $event) {
+                    $defaults[$channel]['templates'][$event] = array_merge(
+                        $defaults[$channel]['templates'][$event] ?? [],
+                        $stored[$channel]['templates'][$event] ?? []
+                    );
+                }
+            }
+            if (in_array($channel, ['sms', 'whatsapp']) && isset($stored[$channel]['templates'])) {
+                foreach (['created', 'validated', 'rejected', 'check_in', 'check_out'] as $event) {
+                    $defaults[$channel]['templates'][$event] = $stored[$channel]['templates'][$event] ?? $defaults[$channel]['templates'][$event];
+                }
+            }
+        }
+
+        return $defaults;
     }
 }

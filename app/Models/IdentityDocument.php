@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\File;
 
 class IdentityDocument extends Model
 {
@@ -39,7 +40,22 @@ class IdentityDocument extends Model
      */
     public function getFrontUrlAttribute(): ?string
     {
-        return $this->front_path ? asset('storage/' . $this->front_path) : null;
+        if (!$this->front_path) {
+            return null;
+        }
+        
+        // Nettoyer le chemin (compatibilité avec anciens chemins storage/)
+        $cleanPath = $this->front_path;
+        if (strpos($cleanPath, 'storage/') === 0) {
+            $cleanPath = str_replace('storage/', 'images/', $cleanPath);
+        }
+        
+        $fullPath = public_path($cleanPath);
+        if (File::exists($fullPath)) {
+            return asset($cleanPath);
+        }
+        
+        return null;
     }
 
     /**
@@ -47,7 +63,22 @@ class IdentityDocument extends Model
      */
     public function getBackUrlAttribute(): ?string
     {
-        return $this->back_path ? asset('storage/' . $this->back_path) : null;
+        if (!$this->back_path) {
+            return null;
+        }
+        
+        // Nettoyer le chemin (compatibilité avec anciens chemins storage/)
+        $cleanPath = $this->back_path;
+        if (strpos($cleanPath, 'storage/') === 0) {
+            $cleanPath = str_replace('storage/', 'images/', $cleanPath);
+        }
+        
+        $fullPath = public_path($cleanPath);
+        if (File::exists($fullPath)) {
+            return asset($cleanPath);
+        }
+        
+        return null;
     }
 
     /**

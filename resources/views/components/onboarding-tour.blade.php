@@ -18,14 +18,14 @@
                         <div class="step-number">1</div>
                         <div class="step-content">
                             <h6>Tableau de bord</h6>
-                            <p>Consultez les statistiques et les dernières pré-réservations</p>
+                            <p>Consultez les statistiques et les derniers pré-enregistrements</p>
                         </div>
                     </div>
                     <div class="tour-step">
                         <div class="step-number">2</div>
                         <div class="step-content">
-                            <h6>Pré-réservations</h6>
-                            <p>Validez, modifiez ou rejetez les pré-réservations en attente</p>
+                            <h6>Pré-enregistrements</h6>
+                            <p>Validez, modifiez ou rejetez les pré-enregistrements en attente</p>
                         </div>
                     </div>
                     <div class="tour-step">
@@ -39,7 +39,7 @@
                         <div class="step-number">4</div>
                         <div class="step-content">
                             <h6>Recherche avancée</h6>
-                            <p>Utilisez les filtres pour trouver rapidement une réservation</p>
+                            <p>Utilisez les filtres pour trouver rapidement un enregistrement</p>
                         </div>
                     </div>
                 </div>

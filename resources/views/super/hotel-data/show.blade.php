@@ -109,9 +109,9 @@
                 <div class="col-md-3 mb-3">
                     <div class="card text-white bg-primary shadow-sm h-100">
                         <div class="card-body text-center">
-                            <i class="bi bi-calendar-check" style="font-size: 2.5rem;"></i>
+                            <i class="bi bi-calendar-check stat-card-icon"></i>
                             <h3 class="mt-2 mb-1">{{ $stats['reservations'] }}</h3>
-                            <p class="mb-0">Réservations</p>
+                            <p class="mb-0">Enregistrements</p>
                             <small class="d-block mt-2">
                                 <span class="badge bg-light text-primary">{{ $stats['reservations_pending'] }} en attente</span>
                                 <span class="badge bg-light text-success">{{ $stats['reservations_validated'] }} validées</span>
@@ -124,7 +124,7 @@
                 <div class="col-md-3 mb-3">
                     <div class="card text-white bg-success shadow-sm h-100">
                         <div class="card-body text-center">
-                            <i class="bi bi-people-fill" style="font-size: 2.5rem;"></i>
+                            <i class="bi bi-people-fill stat-card-icon"></i>
                             <h3 class="mt-2 mb-1">{{ $stats['users'] }}</h3>
                             <p class="mb-0">Utilisateurs</p>
                         </div>
@@ -134,7 +134,7 @@
                 <div class="col-md-3 mb-3">
                     <div class="card text-white bg-warning shadow-sm h-100">
                         <div class="card-body text-center">
-                            <i class="bi bi-door-open" style="font-size: 2.5rem;"></i>
+                            <i class="bi bi-door-open stat-card-icon"></i>
                             <h3 class="mt-2 mb-1">{{ $stats['room_types'] }}</h3>
                             <p class="mb-0">Types de Chambres</p>
                             <small class="d-block mt-2">{{ $stats['rooms'] }} chambres au total</small>
@@ -142,20 +142,11 @@
                     </div>
                 </div>
 
-                <div class="col-md-3 mb-3">
-                    <div class="card text-white bg-info shadow-sm h-100">
-                        <div class="card-body text-center">
-                            <i class="bi bi-printer" style="font-size: 2.5rem;"></i>
-                            <h3 class="mt-2 mb-1">{{ $stats['printers'] }}</h3>
-                            <p class="mb-0">Imprimantes</p>
-                        </div>
-                    </div>
-                </div>
-
+                {{-- Carte Imprimantes masquée : module imprimantes retiré --}}
                 <div class="col-md-3 mb-3">
                     <div class="card text-white bg-secondary shadow-sm h-100">
                         <div class="card-body text-center">
-                            <i class="bi bi-file-earmark-text" style="font-size: 2.5rem;"></i>
+                            <i class="bi bi-file-earmark-text stat-card-icon"></i>
                             <h3 class="mt-2 mb-1">{{ $stats['identity_documents'] }}</h3>
                             <p class="mb-0">Documents d'Identité</p>
                         </div>
@@ -165,7 +156,7 @@
                 <div class="col-md-3 mb-3">
                     <div class="card text-white bg-dark shadow-sm h-100">
                         <div class="card-body text-center">
-                            <i class="bi bi-pen" style="font-size: 2.5rem;"></i>
+                            <i class="bi bi-pen stat-card-icon"></i>
                             <h3 class="mt-2 mb-1">{{ $stats['signatures'] }}</h3>
                             <p class="mb-0">Signatures</p>
                         </div>
@@ -175,7 +166,7 @@
                 <div class="col-md-3 mb-3">
                     <div class="card text-white bg-danger shadow-sm h-100">
                         <div class="card-body text-center">
-                            <i class="bi bi-gear" style="font-size: 2.5rem;"></i>
+                            <i class="bi bi-gear stat-card-icon"></i>
                             <h3 class="mt-2 mb-1">{{ $stats['settings'] }}</h3>
                             <p class="mb-0">Paramètres</p>
                         </div>
@@ -183,13 +174,39 @@
                 </div>
 
                 <div class="col-md-3 mb-3">
-                    <div class="card text-white" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);" shadow-sm h-100">
+                    <div class="card text-white bg-info shadow-sm h-100">
                         <div class="card-body text-center">
-                            <i class="bi bi-clock-history" style="font-size: 2.5rem;"></i>
-                            <h3 class="mt-2 mb-1">{{ $stats['print_logs'] + $stats['activity_logs'] }}</h3>
+                            <i class="bi bi-bucket stat-card-icon"></i>
+                            <h3 class="mt-2 mb-1">{{ $stats['housekeeping_tasks'] ?? 0 }}</h3>
+                            <p class="mb-0">Tâches étages</p>
+                            <small class="d-block mt-2">{{ $stats['room_state_history'] ?? 0 }} historiques d'états</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-3 mb-3">
+                    <div class="card text-white bg-success shadow-sm h-100">
+                        <div class="card-body text-center">
+                            <i class="bi bi-bucket stat-card-icon"></i>
+                            <h3 class="mt-2 mb-1">{{ $stats['laundry_collections'] ?? 0 }}</h3>
+                            <p class="mb-0">Collectes buanderie</p>
+                            <small class="d-block mt-2">{{ $stats['laundry_item_types'] ?? 0 }} types de linge</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-3 mb-3">
+                    <div class="card text-white bg-secondary shadow-sm h-100">
+                        <div class="card-body text-center">
+                            <i class="bi bi-clock-history stat-card-icon"></i>
+                            <h3 class="mt-2 mb-1">{{ ($hasPrintersModule ?? false) ? ($stats['print_logs'] + $stats['activity_logs']) : $stats['activity_logs'] }}</h3>
                             <p class="mb-0">Logs</p>
                             <small class="d-block mt-2">
-                                {{ $stats['print_logs'] }} impression / {{ $stats['activity_logs'] }} activité
+                                @if($hasPrintersModule ?? false)
+                                    {{ $stats['print_logs'] }} impression / {{ $stats['activity_logs'] }} activité
+                                @else
+                                    {{ $stats['activity_logs'] }} activité
+                                @endif
                             </small>
                         </div>
                     </div>
@@ -207,13 +224,13 @@
                 <div class="card-body p-0">
                     @if($users->count() > 0)
                     <div class="table-responsive">
-                        <table class="table table-hover mb-0">
+                        <table class="table table-sm table-hover table-striped align-middle mb-0 super-admin-table" aria-label="Utilisateurs de l'hôtel">
                             <thead class="table-light">
                                 <tr>
-                                    <th>Nom</th>
-                                    <th>Email</th>
-                                    <th>Rôles</th>
-                                    <th>Créé le</th>
+                                    <th scope="col"><i class="bi bi-person me-1 text-primary"></i>Nom</th>
+                                    <th scope="col"><i class="bi bi-envelope me-1 text-primary"></i>Email</th>
+                                    <th scope="col"><i class="bi bi-person-badge me-1 text-primary"></i>Rôles</th>
+                                    <th scope="col"><i class="bi bi-calendar3 me-1 text-primary"></i>Créé le</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -234,7 +251,7 @@
                     </div>
                     @else
                     <div class="text-center py-4 text-muted">
-                        <i class="bi bi-inbox" style="font-size: 3rem;"></i>
+                        <i class="bi bi-inbox empty-state-icon"></i>
                         <p class="mt-2">Aucun utilisateur</p>
                     </div>
                     @endif
@@ -269,48 +286,7 @@
             </div>
             @endif
 
-            <!-- Imprimantes -->
-            @if($printers->count() > 0)
-            <div class="card shadow-sm mb-4">
-                <div class="card-header bg-info text-white">
-                    <h5 class="mb-0"><i class="bi bi-printer me-2"></i>Imprimantes Configurées ({{ $printers->count() }})</h5>
-                </div>
-                <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="table table-hover mb-0">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>Nom</th>
-                                    <th>Adresse IP</th>
-                                    <th>Port</th>
-                                    <th>Type</th>
-                                    <th>Module</th>
-                                    <th>Statut</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach($printers as $printer)
-                                <tr>
-                                    <td><i class="bi bi-printer me-2"></i>{{ $printer->name }}</td>
-                                    <td><code>{{ $printer->ip_address }}</code></td>
-                                    <td>{{ $printer->port }}</td>
-                                    <td><span class="badge bg-secondary">{{ $printer->type }}</span></td>
-                                    <td><span class="badge bg-primary">{{ $printer->module }}</span></td>
-                                    <td>
-                                        @if($printer->is_active)
-                                            <span class="badge bg-success"><i class="bi bi-check-circle"></i> Active</span>
-                                        @else
-                                            <span class="badge bg-danger"><i class="bi bi-x-circle"></i> Inactive</span>
-                                        @endif
-                                    </td>
-                                </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-            @endif
+            {{-- Section Imprimantes masquée : module imprimantes retiré --}}
 
             <!-- Paramètres -->
             @if($settings->count() > 0)
@@ -338,25 +314,25 @@
             </div>
             @endif
 
-            <!-- Réservations Récentes -->
+            <!-- Enregistrements récents -->
             @if($recentReservations->count() > 0)
             <div class="card shadow-sm mb-4">
                 <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0"><i class="bi bi-calendar-check me-2"></i>10 Dernières Pré-réservations</h5>
+                    <h5 class="mb-0"><i class="bi bi-calendar-check me-2"></i>10 Derniers Pré-enregistrements</h5>
                     <a href="{{ route('super.reservations.index', ['hotel' => $hotel->id]) }}" class="btn btn-light btn-sm">
                         <i class="bi bi-eye me-1"></i>Voir toutes
                     </a>
                 </div>
                 <div class="card-body p-0">
                     <div class="table-responsive">
-                        <table class="table table-hover mb-0">
+                        <table class="table table-sm table-hover table-striped align-middle mb-0 super-admin-table" aria-label="Derniers pré-enregistrements">
                             <thead class="table-light">
                                 <tr>
-                                    <th>ID</th>
-                                    <th>Client</th>
-                                    <th>Statut</th>
-                                    <th>Type</th>
-                                    <th>Date</th>
+                                    <th scope="col"><i class="bi bi-hash me-1 text-primary"></i>ID</th>
+                                    <th scope="col"><i class="bi bi-person me-1 text-primary"></i>Client</th>
+                                    <th scope="col"><i class="bi bi-flag me-1 text-primary"></i>Statut</th>
+                                    <th scope="col"><i class="bi bi-tag me-1 text-primary"></i>Type</th>
+                                    <th scope="col"><i class="bi bi-calendar3 me-1 text-primary"></i>Date</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -412,7 +388,7 @@
                                     <h6 class="card-title text-success">
                                         <i class="bi bi-download me-2"></i>Export Complet
                                     </h6>
-                                    <p class="card-text small">Téléchargez TOUTES les données de l'hôtel (types de chambres, chambres, utilisateurs, réservations + documents, imprimantes, paramètres, formulaires, etc.) au format JSON pour une sauvegarde complète. Les signatures ne sont pas incluses (données binaires).</p>
+                                    <p class="card-text small">Téléchargez TOUTES les données de l'hôtel (types de chambres, chambres, utilisateurs, enregistrements + documents, imprimantes, paramètres, formulaires, etc.) au format JSON pour une sauvegarde complète. Les signatures ne sont pas incluses (données binaires).</p>
                                     <a href="{{ route('super.hotel-data.export', $hotel) }}" class="btn btn-success btn-sm">
                                         <i class="bi bi-download me-1"></i>Exporter tout (JSON)
                                     </a>
@@ -427,7 +403,7 @@
                                     <h6 class="card-title text-info">
                                         <i class="bi bi-upload me-2"></i>Import Complet
                                     </h6>
-                                    <p class="card-text small">Importez TOUTES les données depuis un fichier JSON exporté (types de chambres, chambres, utilisateurs, réservations + documents, imprimantes, paramètres, formulaires). Les données sont ajoutées aux données existantes. Les signatures ne sont pas importées (données binaires).</p>
+                                    <p class="card-text small">Importez TOUTES les données depuis un fichier JSON exporté (types de chambres, chambres, utilisateurs, enregistrements + documents, imprimantes, paramètres, formulaires). Les données sont ajoutées aux données existantes. Les signatures ne sont pas importées (données binaires).</p>
                                     <button type="button" class="btn btn-info btn-sm" data-bs-toggle="modal" data-bs-target="#importModal">
                                         <i class="bi bi-upload me-1"></i>Importer tout
                                     </button>
@@ -457,7 +433,7 @@
                                     <h6 class="card-title text-danger">
                                         <i class="bi bi-trash me-2"></i>Purge Complète (DANGER)
                                     </h6>
-                                    <p class="card-text small">⚠️ Supprime TOUTES les données : réservations, chambres, types de chambres, utilisateurs, paramètres, logs, etc. Action TOTALEMENT irréversible!</p>
+                                    <p class="card-text small">⚠️ Supprime TOUTES les données : enregistrements, chambres, types de chambres, utilisateurs, paramètres, logs, etc. Action TOTALEMENT irréversible!</p>
                                     <button onclick="openPurgeModal()" class="btn btn-danger btn-sm">
                                         <i class="bi bi-trash me-1"></i>Purger tout
                                     </button>
@@ -514,7 +490,7 @@
                                         <td><i class="bi bi-check2 text-success me-1"></i>Recréés (password: <code>password123</code>)</td>
                                     </tr>
                                     <tr>
-                                        <td><i class="bi bi-calendar-check text-primary me-1"></i>Réservations + documents</td>
+                                        <td><i class="bi bi-calendar-check text-primary me-1"></i>Enregistrements + documents</td>
                                         <td><i class="bi bi-check2 text-success me-1"></i>Recréées avec documents d'identité</td>
                                     </tr>
                                     <tr>
@@ -620,14 +596,20 @@
                                     <i class="bi bi-trash me-1"></i>Sera supprimé :
                                 </p>
                                 <ul class="small">
-                                    <li><strong>{{ $stats['reservations'] }}</strong> réservations</li>
+                                    <li><strong>{{ $stats['reservations'] }}</strong> enregistrements</li>
                                     <li><strong>{{ $stats['identity_documents'] }}</strong> documents d'identité</li>
                                     <li><strong>{{ $stats['signatures'] }}</strong> signatures</li>
+                                    <li><strong>{{ $stats['housekeeping_tasks'] ?? 0 }}</strong> tâches étages (housekeeping)</li>
+                                    <li><strong>{{ $stats['room_state_history'] ?? 0 }}</strong> historiques d'états chambres</li>
+                                    <li><strong>{{ $stats['laundry_collections'] ?? 0 }}</strong> collectes buanderie</li>
+                                    <li><strong>{{ $stats['client_linen'] ?? 0 }}</strong> linge client</li>
+                                    @if($hasPrintersModule ?? false)
                                     <li><strong>{{ $stats['print_logs'] }}</strong> logs d'impression</li>
+                                    @endif
                                     <li><strong>{{ $stats['activity_logs'] }}</strong> logs d'activité</li>
                                 </ul>
                                 <p class="small text-muted mb-0">
-                                    <i class="bi bi-info-circle me-1"></i>Données clients et transactions
+                                    <i class="bi bi-info-circle me-1"></i>Données clients, transactions, étages et buanderie
                                 </p>
                             </div>
                             <div class="col-md-6">
@@ -638,7 +620,9 @@
                                     <li><strong>{{ $stats['room_types'] }}</strong> types de chambres</li>
                                     <li><strong>{{ $stats['rooms'] }}</strong> chambres</li>
                                     <li><strong>{{ $stats['users'] }}</strong> utilisateurs</li>
+                                    @if($hasPrintersModule ?? false)
                                     <li><strong>{{ $stats['printers'] }}</strong> imprimantes</li>
+                                    @endif
                                     <li><strong>{{ $stats['settings'] }}</strong> paramètres</li>
                                     <li>Champs de formulaire</li>
                         </ul>
@@ -650,7 +634,7 @@
                         
                         <div class="alert alert-info">
                             <i class="bi bi-lightbulb me-1"></i>
-                            <strong>Utilité :</strong> Nettoyer les anciennes réservations tout en gardant la configuration de l'hôtel intacte (chambres, utilisateurs, etc.)
+                            <strong>Utilité :</strong> Nettoyer les anciens enregistrements tout en gardant la configuration de l'hôtel intacte (chambres, utilisateurs, etc.)
                         </div>
                         
                         <div class="mb-3">
@@ -687,16 +671,23 @@
                         </div>
                         <p class="fw-bold text-danger mb-2">Ce qui sera DÉFINITIVEMENT supprimé :</p>
                         <ul class="mb-3">
-                            <li><strong>{{ $stats['reservations'] }}</strong> réservations avec tous leurs documents</li>
+                            <li><strong>{{ $stats['reservations'] }}</strong> enregistrements avec tous leurs documents</li>
                             <li><strong>{{ $stats['rooms'] }}</strong> chambres</li>
                             <li><strong>{{ $stats['room_types'] }}</strong> types de chambres</li>
+                            <li><strong>{{ $stats['housekeeping_tasks'] ?? 0 }}</strong> tâches étages (housekeeping)</li>
+                            <li><strong>{{ $stats['room_state_history'] ?? 0 }}</strong> historiques d'états chambres</li>
+                            <li><strong>{{ $stats['laundry_collections'] ?? 0 }}</strong> collectes buanderie</li>
+                                    <li><strong>{{ $stats['client_linen'] ?? 0 }}</strong> linge client</li>
+                            <li><strong>{{ $stats['laundry_item_types'] ?? 0 }}</strong> types de linge</li>
                             <li><strong>{{ $stats['users'] }}</strong> utilisateurs (SUPPRIMÉS, pas désactivés)</li>
+                            @if($hasPrintersModule ?? false)
                             <li><strong>{{ $stats['printers'] }}</strong> imprimantes</li>
+                            @endif
                             <li><strong>{{ $stats['settings'] }}</strong> paramètres</li>
                             <li><strong>{{ $stats['identity_documents'] }}</strong> documents d'identité</li>
                             <li><strong>{{ $stats['signatures'] }}</strong> signatures</li>
                             <li>Tous les champs de formulaire personnalisés</li>
-                            <li>Tous les logs ({{ $stats['print_logs'] + $stats['activity_logs'] }})</li>
+                            <li>Tous les logs ({{ ($hasPrintersModule ?? false) ? ($stats['print_logs'] + $stats['activity_logs']) : $stats['activity_logs'] }})</li>
                         </ul>
                         <div class="alert alert-warning">
                             <i class="bi bi-info-circle me-2"></i><strong>Note :</strong> L'hôtel lui-même ne sera PAS supprimé, mais il sera complètement vide.
@@ -722,12 +713,26 @@
 
     <script>
         function openResetModal() {
-    const modal = new bootstrap.Modal(document.getElementById('resetModal'));
+    const modalEl = document.getElementById('resetModal');
+    if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+    modalEl.addEventListener('shown.bs.modal', function onShown() {
+        modalEl.removeEventListener('shown.bs.modal', onShown);
+        const t = modalEl.querySelector('button[data-bs-dismiss="modal"]') || modalEl.querySelector('.btn') || modalEl;
+        if (t && typeof t.focus === 'function') t.focus();
+    });
+    const modal = new bootstrap.Modal(modalEl);
     modal.show();
         }
 
         function openPurgeModal() {
-    const modal = new bootstrap.Modal(document.getElementById('purgeModal'));
+    const modalEl = document.getElementById('purgeModal');
+    if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+    modalEl.addEventListener('shown.bs.modal', function onShown() {
+        modalEl.removeEventListener('shown.bs.modal', onShown);
+        const t = modalEl.querySelector('button[data-bs-dismiss="modal"]') || modalEl.querySelector('.btn') || modalEl;
+        if (t && typeof t.focus === 'function') t.focus();
+    });
+    const modal = new bootstrap.Modal(modalEl);
     modal.show();
 }
 

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Réservation Validée</title>
+    <title>Enregistrement validé</title>
     <style>
         body {
             font-family: 'Arial', 'Helvetica', sans-serif;
@@ -181,7 +181,7 @@
             <div class="divider">-</div>
 
             <!-- Titre de confirmation -->
-            <div class="confirmation-title">Réservation Confirmée!!!</div>
+            <div class="confirmation-title">Enregistrement confirmé!!!</div>
 
             <div class="divider">-</div>
 
@@ -202,9 +202,9 @@
 
             <div class="divider">-</div>
 
-            <!-- Numéro de réservation -->
+            <!-- Numéro d'enregistrement -->
             <div class="reservation-number">
-                Votre Réservation N.{{ str_pad($reservation->id, 7, '0', STR_PAD_LEFT) }} a été confirmée.
+                Votre enregistrement N.{{ str_pad($reservation->id, 7, '0', STR_PAD_LEFT) }} a été confirmée.
             </div>
 
             <div class="divider">-</div>
@@ -237,7 +237,7 @@
 
             <!-- Notice PDF -->
             <div class="pdf-notice">
-                Veuillez télécharger votre Réservation en fichier PDF attaché.
+                Veuillez télécharger votre enregistrement en fichier PDF attaché.
             </div>
 
             <div class="divider">-</div>

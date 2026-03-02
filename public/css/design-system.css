@@ -165,3 +165,198 @@ h6 { font-size: var(--font-size-base, 1rem); }
     padding: var(--nav-link-padding-y, 0.6rem) var(--nav-link-padding-x, 0.875rem);
 }
 
+/* Tableaux – convention unifiée (Super Admin + reste de l'app) */
+.super-admin-table thead th,
+.app-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: var(--bs-table-bg, #f8f9fa) !important;
+    white-space: nowrap;
+}
+
+/* ==========================================
+   CLARTÉ DES TABLEAUX – Colonnes et actions
+   ========================================== */
+
+/* Colonne Nom / première colonne texte : éviter la coupure */
+.app-table th:first-child,
+.super-admin-table th:first-child,
+.app-table .table-cell-nom,
+.super-admin-table .table-cell-nom {
+    min-width: 100px;
+}
+.app-table td:first-child,
+.super-admin-table td:first-child {
+    min-width: 80px;
+}
+.app-table .table-cell-nom td,
+.super-admin-table .table-cell-nom td {
+    min-width: 100px;
+}
+
+/* Colonne Description : largeur min, texte tronqué avec tooltip via title */
+.app-table .table-cell-desc,
+.super-admin-table .table-cell-desc {
+    min-width: 120px;
+    max-width: 280px;
+}
+.app-table .table-cell-desc .text-truncate,
+.super-admin-table .table-cell-desc .text-truncate {
+    display: inline-block;
+    max-width: 100%;
+    vertical-align: middle;
+}
+
+/* Colonne État / Statut : largeur stable pour les badges */
+.app-table .table-cell-state,
+.super-admin-table .table-cell-state {
+    min-width: 130px;
+    white-space: nowrap;
+}
+
+/* Colonne Actions : espace suffisant, boutons alignés et lisibles */
+.app-table .table-actions-cell,
+.super-admin-table .table-actions-cell,
+.app-table td:has(.btn-group),
+.super-admin-table td:has(.btn-group) {
+    min-width: 140px;
+    white-space: nowrap;
+}
+.app-table .btn-group-sm .btn,
+.app-table .btn-group-sm button,
+.super-admin-table .btn-group-sm .btn,
+.super-admin-table .btn-group-sm button {
+    min-width: 34px;
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+}
+.app-table .btn-group-sm .btn i,
+.super-admin-table .btn-group-sm .btn i {
+    font-size: 1rem;
+}
+
+/* Icônes des boutons d'action en couleur (tableaux) */
+.app-table .btn-outline-success i,
+.super-admin-table .btn-outline-success i,
+.modern-table .btn-outline-success i,
+.app-table .btn-outline-success:hover i,
+.super-admin-table .btn-outline-success:hover i,
+.modern-table .btn-outline-success:hover i {
+    color: var(--bs-success) !important;
+}
+.app-table .btn-outline-warning i,
+.super-admin-table .btn-outline-warning i,
+.modern-table .btn-outline-warning i,
+.app-table .btn-outline-warning:hover i,
+.super-admin-table .btn-outline-warning:hover i,
+.modern-table .btn-outline-warning:hover i {
+    color: var(--bs-warning) !important;
+}
+.app-table .btn-outline-info i,
+.super-admin-table .btn-outline-info i,
+.modern-table .btn-outline-info i,
+.app-table .btn-outline-info:hover i,
+.super-admin-table .btn-outline-info:hover i,
+.modern-table .btn-outline-info:hover i {
+    color: var(--bs-info) !important;
+}
+.app-table .btn-outline-danger i,
+.super-admin-table .btn-outline-danger i,
+.modern-table .btn-outline-danger i,
+.app-table .btn-outline-danger:hover i,
+.super-admin-table .btn-outline-danger:hover i,
+.modern-table .btn-outline-danger:hover i {
+    color: var(--bs-danger) !important;
+}
+.app-table .btn-outline-primary i,
+.super-admin-table .btn-outline-primary i,
+.modern-table .btn-outline-primary i,
+.app-table .btn-outline-primary:hover i,
+.super-admin-table .btn-outline-primary:hover i,
+.modern-table .btn-outline-primary:hover i {
+    color: var(--bs-primary) !important;
+}
+.app-table .btn-outline-secondary i,
+.super-admin-table .btn-outline-secondary i,
+.modern-table .btn-outline-secondary i,
+.app-table .btn-outline-secondary:hover i,
+.super-admin-table .btn-outline-secondary:hover i,
+.modern-table .btn-outline-secondary:hover i {
+    color: var(--bs-secondary) !important;
+}
+
+/* Séparateur visuel avant action destructive (ex: supprimer) */
+.app-table .table-actions-cell .btn-group + form,
+.app-table .table-actions-cell .actions-separator,
+.super-admin-table .table-actions-cell .btn-group + form,
+.super-admin-table .table-actions-cell .actions-separator {
+    margin-left: 0.5rem;
+    padding-left: 0.5rem;
+    border-left: 1px solid var(--bs-border-color, #dee2e6);
+}
+
+/* En-tête Actions avec icône pour cohérence */
+.app-table thead th:last-child,
+.super-admin-table thead th:last-child {
+    padding-right: 0.75rem;
+}
+
+/* ==========================================
+   LISIBILITÉ – Texte plus clair dans les tableaux
+   ========================================== */
+
+/* En-têtes de colonnes : texte noir et lisible */
+.app-table thead th,
+.super-admin-table thead th,
+.modern-table thead th {
+    font-weight: 600;
+    color: #000 !important;
+}
+.app-table thead th .text-muted,
+.super-admin-table thead th .text-muted,
+.modern-table thead th .text-muted {
+    color: #000 !important;
+    opacity: 0.9;
+}
+
+/* Cellules : écriture en noir */
+.app-table tbody td,
+.super-admin-table tbody td,
+.modern-table tbody td {
+    color: #000 !important;
+    font-weight: 500;
+}
+.app-table tbody td.small,
+.super-admin-table tbody td.small,
+.modern-table tbody td.small {
+    font-weight: 500;
+}
+.app-table tbody td.text-muted,
+.super-admin-table tbody td.text-muted,
+.modern-table tbody td.text-muted {
+    color: #000 !important;
+    font-weight: 500;
+}
+/* Colonne / éléments de description : noir foncé */
+.app-table .table-cell-desc,
+.super-admin-table .table-cell-desc,
+.modern-table .table-cell-desc,
+.app-table .table-cell-desc.small,
+.app-table .table-cell-desc .text-truncate,
+.super-admin-table .table-cell-desc.small,
+.super-admin-table .table-cell-desc .text-truncate,
+.modern-table .table-cell-desc.small,
+.modern-table .table-cell-desc .text-truncate {
+    color: #000 !important;
+    font-weight: 500;
+}
+.app-table tbody td strong,
+.super-admin-table tbody td strong,
+.modern-table tbody td strong {
+    font-weight: 600;
+    color: #000 !important;
+}

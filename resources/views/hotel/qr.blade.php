@@ -11,7 +11,7 @@
 				</div>
 				<div class="card-body text-center">
 					<div class="mb-4">{!! $qrSvg !!}</div>
-						<p class="text-muted">Scannez ce QR code pour accéder au formulaire de Réservation</p>
+						<p class="text-muted">Scannez ce QR code pour accéder au formulaire d'enregistrement</p>
 						<div class="d-flex gap-2 justify-content-center">
 					<button class="btn btn-primary" onclick="window.print()">
 						<i class="bi bi-printer me-2"></i>Imprimer
@@ -55,7 +55,7 @@
 						<small class="text-muted">
 							• Placez ce QR code à l'entrée de l'hôtel<br>
 							• Les clients peuvent scanner pour remplir le formulaire<br>
-								• Les Réservations apparaîtront dans votre tableau de bord
+								• Les enregistrements apparaîtront dans votre tableau de bord
 						</small>
 					</div>
 					<div class="d-grid gap-2">
@@ -100,7 +100,7 @@
 
 			<!-- Corps principal avec QR code -->
 			<div class="print-body">
-				<h2 class="print-title">Formulaire de Réservation</h2>
+				<h2 class="print-title">Formulaire d'enregistrement</h2>
 				<p class="print-subtitle">Scannez ce QR code pour accéder au formulaire</p>
 				
 				<div class="print-qr-container">
@@ -113,7 +113,7 @@
 						<li>Ouvrez l'appareil photo de votre smartphone</li>
 						<li>Pointez vers ce QR code</li>
 						<li>Tapez sur la notification qui apparaît</li>
-						<li>Remplissez le formulaire de réservation</li>
+						<li>Remplissez le formulaire d'enregistrement</li>
 					</ol>
 				</div>
 

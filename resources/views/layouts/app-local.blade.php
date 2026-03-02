@@ -262,6 +262,33 @@
         .top-bar-icon:hover { background-color: var(--border-color); }
         [data-theme="dark"] .top-bar-icon { background-color: var(--white); color: var(--text-dark); }
         [data-theme="dark"] .top-bar-icon:hover { background-color: var(--light-gray); }
+        
+        /* Style pour le bouton de rafraîchissement actif */
+        #auto-refresh-toggle.active {
+            background-color: var(--primary-blue);
+            color: var(--white);
+        }
+        #auto-refresh-toggle.active:hover {
+            background-color: var(--primary-blue);
+            opacity: 0.9;
+        }
+        [data-theme="dark"] #auto-refresh-toggle.active {
+            background-color: var(--primary-blue);
+            color: var(--white);
+        }
+        [data-theme="dark"] #auto-refresh-toggle.active:hover {
+            background-color: var(--primary-blue);
+            opacity: 0.9;
+        }
+        
+        /* Animation de rotation pour l'icône de rafraîchissement */
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        #auto-refresh-toggle.refreshing #auto-refresh-icon {
+            animation: spin 1s linear infinite;
+        }
 
         .breadcrumb { background-color: transparent; padding: 0; margin-bottom: 1.5rem; }
         .breadcrumb-item a { text-decoration: none; color: var(--primary-blue); }
@@ -693,7 +720,7 @@
                 <li class="breadcrumb-item"><a href="{{ route('dashboard') }}" aria-label="Accueil" title="Accueil"><i class="bi bi-house-door-fill"></i></a></li>
                 <li class="breadcrumb-item active" aria-current="page">{{ $header ?? 'Tableau de bord' }}</li>
             </ol>
-            <span id="page-title" class="mx-auto" style="font-size:1.2rem;font-weight:500;color:var(--primary-blue);flex:1;text-align:center;font-family:'Poppins',sans-serif;">
+            <span id="page-title" class="page-title mx-auto">
                 {{ $header ?? 'Tableau de bord' }}
             </span>
         </nav>
@@ -1195,6 +1222,21 @@
                             title = 'Attention requise';
                             confirmButtonColor = '#ffc107';
                             break;
+                        case 'area_created':
+                            icon = 'info';
+                            title = 'Nouvel espace';
+                            confirmButtonColor = '#0dcaf0';
+                            break;
+                        case 'area_state_updated':
+                            icon = 'info';
+                            title = 'État d\'espace modifié';
+                            confirmButtonColor = '#0dcaf0';
+                            break;
+                        case 'area_deleted':
+                            icon = 'warning';
+                            title = 'Espace supprimé';
+                            confirmButtonColor = '#ffc107';
+                            break;
                         case 'info':
                         default:
                             icon = 'info';
@@ -1207,8 +1249,8 @@
                 let actionText = '';
                 if (notification.message) {
                     const message = notification.message.toLowerCase();
-                    if (message.includes('nouvelle réservation') || message.includes('nouvelle demande')) {
-                        actionText = 'Vérifiez les nouvelles réservations en attente de validation.';
+                    if (message.includes('nouvel enregistrement') || message.includes('nouvelle demande')) {
+                        actionText = 'Vérifiez les nouveaux enregistrements en attente de validation.';
                     } else if (message.includes('arrivée') || message.includes('check-in')) {
                         actionText = 'Un client arrive aujourd\'hui. Préparez l\'accueil.';
                     } else if (message.includes('départ') || message.includes('check-out')) {
@@ -1268,6 +1310,7 @@
                 const icons = {
                     'success': 'bi-check-circle-fill',
                     'error': 'bi-x-circle-fill',
+                    'danger': 'bi-x-circle-fill',
                     'warning': 'bi-exclamation-triangle-fill',
                     'info': 'bi-info-circle-fill',
                 };
@@ -1789,7 +1832,7 @@
                     // Rafraîchir les tableaux DataTables
                     this.refreshDataTables();
                     
-                    // Rafraîchir les listes de réservations
+                    // Rafraîchir les listes d'enregistrements
                     await this.refreshReservations();
                     
                     // Rafraîchir les chambres si sur la page des chambres
@@ -1846,7 +1889,7 @@
             }
             
             async refreshReservations() {
-                // Rafraîchir les listes de réservations si présentes
+                // Rafraîchir les listes d'enregistrements si présentes
                 if (window.location.pathname.includes('/reservations')) {
                     window.dispatchEvent(new CustomEvent('refreshReservations'));
                 }

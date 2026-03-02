@@ -11,6 +11,9 @@
 							<a href="{{ route('super.hotels.design', $hotel) }}" class="btn btn-sm btn-outline-info">
 								<i class="bi bi-palette me-1"></i>Design & Formulaire
 							</a>
+							<a href="{{ route('super.hotels.notifications.show', $hotel) }}" class="btn btn-sm btn-outline-success">
+								<i class="bi bi-envelope-check me-1"></i>Notifications client
+							</a>
 							<button class="btn btn-sm btn-outline-primary" onclick="editHotel({{ $hotel->id }})">
 								<i class="bi bi-pencil me-1"></i>Modifier
 							</button>
@@ -85,17 +88,17 @@
 			
 			<div class="card border-0 shadow-sm">
 				<div class="card-header bg-transparent">
-					<h5 class="mb-0">Réservations récentes</h5>
+					<h5 class="mb-0">Enregistrements récents</h5>
 				</div>
 				<div class="card-body">
 					@if($hotel->reservations->count() > 0)
 						<div class="table-responsive">
-							<table class="table table-sm">
-								<thead>
+							<table class="table table-sm table-hover table-striped align-middle mb-0 super-admin-table" aria-label="Enregistrements récents">
+								<thead class="table-light">
 									<tr>
-										<th>Date</th>
-										<th>Client</th>
-										<th>Statut</th>
+										<th scope="col"><i class="bi bi-calendar3 me-1 text-primary"></i>Date</th>
+										<th scope="col"><i class="bi bi-person me-1 text-primary"></i>Client</th>
+										<th scope="col"><i class="bi bi-flag me-1 text-primary"></i>Statut</th>
 									</tr>
 								</thead>
 								<tbody>
@@ -114,7 +117,7 @@
 							</table>
 						</div>
 					@else
-						<p class="text-muted">Aucune réservation</p>
+						<p class="text-muted">Aucun enregistrement</p>
 					@endif
 				</div>
 			</div>
@@ -151,10 +154,45 @@
 							<div class="text-success">
 								<i class="bi bi-calendar-check" style="font-size: 1.5rem;"></i>
 								<div class="small">{{ $hotel->reservations->count() }}</div>
-								<div class="small text-muted">Réservations</div>
+								<div class="small text-muted">Enregistrements</div>
 							</div>
 						</div>
 					</div>
+				</div>
+			</div>
+
+			{{-- Modules activés (Housekeeping, etc.) --}}
+			<div class="card border-0 shadow-sm mb-4" id="modules">
+				<div class="card-header bg-transparent d-flex justify-content-between align-items-center">
+					<h6 class="mb-0">Modules activés</h6>
+				</div>
+				<div class="card-body">
+					<form action="{{ route('super.hotels.modules.update', $hotel) }}" method="POST">
+						@csrf
+						@method('PUT')
+						@php
+							$modules = $hotel->settings['modules'] ?? [];
+							$housekeepingEnabled = (bool) ($modules['housekeeping'] ?? true);
+							$laundryEnabled = (bool) ($modules['laundry'] ?? false);
+						@endphp
+						<div class="form-check form-switch mb-3">
+							<input type="hidden" name="modules[housekeeping]" value="0">
+							<input class="form-check-input" type="checkbox" name="modules[housekeeping]" value="1" id="module-housekeeping" {{ $housekeepingEnabled ? 'checked' : '' }}>
+							<label class="form-check-label" for="module-housekeeping">
+								<strong>Service des étages (Housekeeping)</strong>
+							</label>
+							<p class="small text-muted mb-0 mt-1">Chambres à nettoyer après check-out, tâches et notifications pour le rôle housekeeping.</p>
+						</div>
+						<div class="form-check form-switch mb-3">
+							<input type="hidden" name="modules[laundry]" value="0">
+							<input class="form-check-input" type="checkbox" name="modules[laundry]" value="1" id="module-laundry" {{ $laundryEnabled ? 'checked' : '' }}>
+							<label class="form-check-label" for="module-laundry">
+								<strong>Buanderie (Laundry)</strong>
+							</label>
+							<p class="small text-muted mb-0 mt-1">Collecte de linge créée automatiquement à chaque fin de nettoyage ; suivi et quantités par type de linge pour le rôle laundry.</p>
+						</div>
+						<button type="submit" class="btn btn-sm btn-primary">Enregistrer les modules</button>
+					</form>
 				</div>
 			</div>
 			
@@ -166,6 +204,12 @@
 					<div class="d-grid gap-2">
 						<a href="{{ route('super.users.index', ['hotel' => $hotel->id]) }}" class="btn btn-outline-primary btn-sm">
 							<i class="bi bi-people me-1"></i>Gérer les utilisateurs
+						</a>
+						<a href="{{ route('super.hotels.laundry-item-types.index', $hotel) }}" class="btn btn-outline-secondary btn-sm">
+							<i class="bi bi-tags me-1"></i>Types de linge (Buanderie)
+						</a>
+						<a href="{{ route('super.hotels.notifications.show', $hotel) }}" class="btn btn-outline-success btn-sm">
+							<i class="bi bi-envelope-check me-1"></i>Notifications client (Email/SMS/WhatsApp)
 						</a>
 						<a href="{{ route('super.forms.index', ['hotel' => $hotel->id]) }}" class="btn btn-outline-secondary btn-sm">
 							<i class="bi bi-gear me-1"></i>Configurer le formulaire
@@ -370,7 +414,14 @@ function editHotel(hotelId) {
 			loadRoomTypes(hotelId);
 			
 			document.getElementById('editHotelForm').action = `/super/hotels/${hotelId}`;
-			new bootstrap.Modal(document.getElementById('editHotelModal')).show();
+			const modalEl = document.getElementById('editHotelModal');
+			if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+			modalEl.addEventListener('shown.bs.modal', function onShown() {
+				modalEl.removeEventListener('shown.bs.modal', onShown);
+				const t = modalEl.querySelector('button[data-bs-dismiss="modal"]') || modalEl.querySelector('.btn-primary') || modalEl;
+				if (t && typeof t.focus === 'function') t.focus();
+			});
+			new bootstrap.Modal(modalEl).show();
 		})
 		.catch(error => {
 			console.error('Erreur détaillée:', error);

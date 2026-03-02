@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Confirmation de Réservation</title>
+    <title>Confirmation d'enregistrement</title>
     <style>
         @page {
             margin: 15mm;
@@ -285,7 +285,7 @@
         <div class="hotelpro-title">HotelPro</div>
         <div class="hotelpro-subtitle">logiciel africain de Gestion hôtelière recommandé par les hôteliers</div>
         
-        <div class="confirmation-title">Africa Confirmation de réservation</div>
+        <div class="confirmation-title">Africa Confirmation d'enregistrement</div>
         
         <div class="reservation-number">
             NUMÉRO DE RÉSERVATION : {{ str_pad($reservation->id, 7, '0', STR_PAD_LEFT) }}
@@ -378,7 +378,7 @@
     <div class="important-info">
         <div class="important-title">Informations importantes</div>
         <div class="important-text">
-            Veuillez noter qu'à l'arrivée, vous devez présenter une carte de crédit pour garantir la réservation. Les personnes sans carte de crédit sont tenues de payer la totalité de leur séjour en espèces.
+            Veuillez noter qu'à l'arrivée, vous devez présenter une carte de crédit pour garantir l'enregistrement. Les personnes sans carte de crédit sont tenues de payer la totalité de leur séjour en espèces.
         </div>
         <div class="important-text">
             Veuillez noter que pour tous les séjours, les chambres sont nettoyées tous les jours. Le linge et les serviettes de toilette sont également remplacés chaque jour.
@@ -427,7 +427,7 @@
             <li>Un billet d'avion aller / retour</li>
             <li>Un certificat international de vaccination (fièvre jaune)</li>
             <li>Deux photos d'identité récentes</li>
-            <li>Une réservation d'hôtel, ou – si vous comptez résider chez l'habitant, le certificat d'hébergement que la personne qui vous accueille aura fait légaliser dans sa commune</li>
+            <li>Un enregistrement d'hôtel, ou – si vous comptez résider chez l'habitant, le certificat d'hébergement que la personne qui vous accueille aura fait légaliser dans sa commune</li>
             <li>Un formulaire de demande de visa retiré au consulat</li>
             <li>Les frais de timbres, vendus au consulat.</li>
         </ul>

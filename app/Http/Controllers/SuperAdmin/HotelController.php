@@ -2,14 +2,15 @@
 
 namespace App\Http\Controllers\SuperAdmin;
 
+use App\Core\SettingsResolver;
 use App\Http\Controllers\Controller;
+use App\Models\ActivityLog;
 use App\Models\Hotel;
 use App\Models\User;
 use App\Models\FormField;
 use App\Models\Reservation;
 use App\Models\Signature;
 use App\Models\IdentityDocument;
-use App\Models\Printer;
 use App\Models\Setting;
 use App\Models\Room;
 use App\Models\RoomType;
@@ -17,6 +18,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Str;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class HotelController extends Controller
@@ -54,6 +57,15 @@ class HotelController extends Controller
         return view('super.hotels.index', compact('hotels'));
     }
 
+    /**
+     * Liste des hôtels avec accès à l'activation des modules (housekeeping, etc.).
+     */
+    public function modulesIndex()
+    {
+        $hotels = Hotel::orderBy('name')->get(['id', 'name', 'logo', 'city', 'country', 'settings']);
+        return view('super.hotels.modules-index', compact('hotels'));
+    }
+
     public function store(Request $request)
     {
         $data = $request->validate([
@@ -73,7 +85,51 @@ class HotelController extends Controller
 
         // Gérer l'upload du logo
         if ($request->hasFile('logo')) {
-            $data['logo'] = $request->file('logo')->store('hotels/logos', 'public');
+            try {
+                $extension = $request->file('logo')->getClientOriginalExtension();
+                $filename = 'logo_' . Str::random(40) . '.' . $extension;
+                $directory = public_path('images/logos');
+                
+                // Créer le répertoire s'il n'existe pas
+                if (!File::exists($directory)) {
+                    File::makeDirectory($directory, 0755, true, true);
+                }
+                
+                // Vérifier que le répertoire est accessible en écriture
+                if (!is_writable($directory)) {
+                    \Log::error('Dossier logos non accessible en écriture', ['directory' => $directory]);
+                    throw new \Exception('Le dossier des logos n\'est pas accessible en écriture');
+                }
+                
+                // Déplacer le fichier
+                $file = $request->file('logo');
+                $fullPath = $directory . '/' . $filename;
+                
+                if (!$file->move($directory, $filename)) {
+                    throw new \Exception('Impossible de déplacer le fichier uploadé');
+                }
+                
+                // Vérifier que le fichier existe bien
+                if (!File::exists($fullPath)) {
+                    throw new \Exception('Le fichier n\'a pas été créé correctement');
+                }
+                
+                $data['logo'] = 'images/logos/' . $filename;
+                
+                \Log::info('Logo uploadé avec succès', [
+                    'filename' => $filename,
+                    'path' => $data['logo'],
+                    'full_path' => $fullPath
+                ]);
+            } catch (\Exception $e) {
+                \Log::error('Erreur lors de l\'upload du logo', [
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString()
+                ]);
+                return redirect()->back()
+                    ->withInput()
+                    ->withErrors(['logo' => 'Erreur lors de l\'upload du logo: ' . $e->getMessage()]);
+            }
         }
 
         $hotel = Hotel::create($data);
@@ -86,39 +142,47 @@ class HotelController extends Controller
                     'price' => $roomTypeData['price'],
                     'description' => $roomTypeData['description'] ?? null,
                     'capacity' => $roomTypeData['capacity'] ?? null,
-                    'is_available' => $roomTypeData['is_available'] ?? true,
+                    'is_available' => isset($roomTypeData['is_available']) ? (bool)$roomTypeData['is_available'] : true,
                 ]);
-                
-                // Créer les chambres pour ce type si spécifié
+
+                // Créer les chambres pour ce type
                 if (isset($roomTypeData['rooms']) && is_array($roomTypeData['rooms'])) {
                     foreach ($roomTypeData['rooms'] as $roomData) {
-                        if (!empty($roomData['number'])) {
-                        $hotel->rooms()->create([
-                            'room_type_id' => $roomType->id,
-                                'room_number' => $roomData['number'],
-                            'floor' => $roomData['floor'] ?? null,
-                                'status' => $roomData['status'] ?? 'available',
-                                'notes' => null,
-                        ]);
+                        // Support ancien format (string) et nouveau format (array)
+                        if (is_string($roomData)) {
+                            $roomNumber = $roomData;
+                            $floor = null;
+                            $status = 'available';
+                        } else {
+                            $roomNumber = $roomData['number'] ?? $roomData['room_number'] ?? null;
+                            $floor = $roomData['floor'] ?? null;
+                            $status = $roomData['status'] ?? 'available';
+                        }
+                        
+                        if ($roomNumber) {
+                            $hotel->rooms()->create([
+                                'room_type_id' => $roomType->id,
+                                'room_number' => $roomNumber,
+                                'floor' => $floor,
+                                'status' => $status,
+                            ]);
                         }
                     }
                 }
             }
         }
-        
-        // Créer un admin par défaut pour l'hôtel avec email unique
-        $admin = User::create([
+
+        // Créer un utilisateur admin par défaut pour cet hôtel
+        $adminUser = User::create([
             'hotel_id' => $hotel->id,
             'name' => 'Admin ' . $hotel->name,
-            'email' => 'admin.hotel' . $hotel->id . '@' . strtolower(str_replace(' ', '', $hotel->name)) . '.local',
+            'email' => 'admin@' . Str::slug($hotel->name) . '.test',
             'password' => Hash::make('password'),
         ]);
-        $admin->assignRole('hotel-admin');
-        
-        // Initialiser les champs de formulaire prédéfinis
-        $this->initializeFormFields($hotel);
+        $adminUser->assignRole('hotel-admin');
 
-        return redirect()->route('super.hotels.index')->with('success', 'Hôtel créé avec succès ! Le formulaire de pré-réservation a été automatiquement configuré.');
+        return redirect()->route('super.hotels.index')
+            ->with('success', 'Hôtel créé avec succès. Un compte admin a été créé: ' . $adminUser->email);
     }
 
     public function show(Hotel $hotel)
@@ -134,10 +198,90 @@ class HotelController extends Controller
             $query->latest()->limit(10);
         }]);
         
+        // Générer l'URL du formulaire (utilise route() pour une URL dynamique)
         $qrUrl = route('public.form', $hotel);
-        $qrSvg = QrCode::format('svg')->size(200)->generate($qrUrl);
+
+        // Générer le QR code avec logo si imagick est disponible, sinon SVG
+        $primaryRgb = $this->hexToRgb($hotel->primary_color ?? '#020220');
+        
+        // Vérifier si imagick est disponible pour PNG + logo
+        $logoPath = null;
+        if (extension_loaded('imagick') && $hotel->hasLogo() && $hotel->logo) {
+            $logoPath = public_path($hotel->logo);
+            // Compatibilité avec anciens chemins
+            if (strpos($hotel->logo, 'storage/') === 0 || strpos($hotel->logo, 'hotels/') === 0) {
+                $logoPath = public_path('images/logos/' . basename($hotel->logo));
+            }
+            
+            if (!File::exists($logoPath)) {
+                $logoPath = null;
+            }
+        }
+        
+        if ($logoPath && extension_loaded('imagick')) {
+            // Générer en PNG avec logo
+            $qrImage = QrCode::format('png')
+                ->size(200)
+                ->margin(2)
+                ->errorCorrection('H')
+                ->color($primaryRgb[0], $primaryRgb[1], $primaryRgb[2])
+                ->backgroundColor(255, 255, 255)
+                ->merge($logoPath, 0.25, true)
+                ->generate($qrUrl);
+            
+            // Convertir PNG en base64 pour l'affichage
+            $qrSvg = '<img src="data:image/png;base64,' . base64_encode($qrImage) . '" alt="QR Code" style="max-width: 100%; height: auto;">';
+        } else {
+            // Générer en SVG (fonctionne sans imagick)
+            $qrSvg = QrCode::format('svg')
+                ->size(200)
+                ->margin(2)
+                ->errorCorrection('H')
+                ->color($primaryRgb[0], $primaryRgb[1], $primaryRgb[2])
+                ->backgroundColor(255, 255, 255)
+                ->generate($qrUrl);
+        }
         
         return view('super.hotels.show', compact('hotel', 'qrSvg', 'qrUrl'));
+    }
+
+    /**
+     * Retourner les types de chambres d'un hôtel en JSON (pour l'éditeur)
+     */
+    public function getRoomTypes(Hotel $hotel)
+    {
+        try {
+            $roomTypes = $hotel->roomTypes()
+                ->with('rooms:id,room_type_id,room_number,floor,status')
+                ->get()
+                ->map(function($roomType) {
+                    return [
+                        'id' => $roomType->id,
+                        'name' => $roomType->name,
+                        'price' => $roomType->price,
+                        'description' => $roomType->description,
+                        'capacity' => $roomType->capacity,
+                        'is_available' => $roomType->is_available,
+                        'rooms' => $roomType->rooms->map(function($room) {
+                            return [
+                                'id' => $room->id,
+                                'room_number' => $room->room_number,
+                                'floor' => $room->floor,
+                                'status' => $room->status,
+                            ];
+                        })->toArray(),
+                    ];
+                });
+
+            return response()->json($roomTypes);
+        } catch (\Exception $e) {
+            \Log::error('Erreur getRoomTypes', [
+                'hotel_id' => $hotel->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
     }
 
     public function update(Request $request, Hotel $hotel)
@@ -159,11 +303,66 @@ class HotelController extends Controller
 
         // Gérer l'upload du logo
         if ($request->hasFile('logo')) {
-            // Supprimer l'ancien logo si existe
-            if ($hotel->logo && Storage::disk('public')->exists($hotel->logo)) {
-                Storage::disk('public')->delete($hotel->logo);
+            try {
+                // Supprimer l'ancien logo si existe
+                if ($hotel->logo) {
+                    $oldPath = public_path($hotel->logo);
+                    // Compatibilité avec anciens chemins
+                    if (strpos($hotel->logo, 'storage/') === 0 || strpos($hotel->logo, 'hotels/') === 0) {
+                        $oldPath = public_path('images/logos/' . basename($hotel->logo));
+                    }
+                    if (File::exists($oldPath)) {
+                        File::delete($oldPath);
+                        \Log::info('Ancien logo supprimé', ['path' => $oldPath]);
+                    }
+                }
+                
+                $extension = $request->file('logo')->getClientOriginalExtension();
+                $filename = 'logo_' . Str::random(40) . '.' . $extension;
+                $directory = public_path('images/logos');
+                
+                // Créer le répertoire s'il n'existe pas
+                if (!File::exists($directory)) {
+                    File::makeDirectory($directory, 0755, true, true);
+                }
+                
+                // Vérifier que le répertoire est accessible en écriture
+                if (!is_writable($directory)) {
+                    \Log::error('Dossier logos non accessible en écriture', ['directory' => $directory]);
+                    throw new \Exception('Le dossier des logos n\'est pas accessible en écriture');
+                }
+                
+                // Déplacer le fichier
+                $file = $request->file('logo');
+                $fullPath = $directory . '/' . $filename;
+                
+                if (!$file->move($directory, $filename)) {
+                    throw new \Exception('Impossible de déplacer le fichier uploadé');
+                }
+                
+                // Vérifier que le fichier existe bien
+                if (!File::exists($fullPath)) {
+                    throw new \Exception('Le fichier n\'a pas été créé correctement');
+                }
+                
+                $data['logo'] = 'images/logos/' . $filename;
+                
+                \Log::info('Logo uploadé avec succès (update)', [
+                    'hotel_id' => $hotel->id,
+                    'filename' => $filename,
+                    'path' => $data['logo'],
+                    'full_path' => $fullPath
+                ]);
+            } catch (\Exception $e) {
+                \Log::error('Erreur lors de l\'upload du logo (update)', [
+                    'hotel_id' => $hotel->id,
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString()
+                ]);
+                return redirect()->back()
+                    ->withInput()
+                    ->withErrors(['logo' => 'Erreur lors de l\'upload du logo: ' . $e->getMessage()]);
             }
-            $data['logo'] = $request->file('logo')->store('hotels/logos', 'public');
         } else {
             // Si aucun nouveau logo n'est fourni, retirer le champ du tableau pour conserver l'ancien
             unset($data['logo']);
@@ -171,177 +370,63 @@ class HotelController extends Controller
 
         $hotel->update($data);
         
-        // Gérer les types de chambre
-        if ($request->has('room_types') && is_array($request->room_types)) {
-            $existingIds = [];
-            
-            foreach ($request->room_types as $roomTypeData) {
-                if (isset($roomTypeData['id']) && $roomTypeData['id']) {
-                    // Mettre à jour un type existant
-                    $roomType = $hotel->roomTypes()->find($roomTypeData['id']);
-                    if ($roomType) {
-                        $roomType->update([
-                            'name' => $roomTypeData['name'],
-                            'price' => $roomTypeData['price'],
-                            'description' => $roomTypeData['description'] ?? null,
-                            'capacity' => $roomTypeData['capacity'] ?? null,
-                            'is_available' => $roomTypeData['is_available'] ?? true,
-                        ]);
-                        $existingIds[] = $roomType->id;
-                        
-                        // Gérer les chambres pour ce type
-                        if (isset($roomTypeData['rooms']) && is_array($roomTypeData['rooms'])) {
-                            $existingRoomIds = [];
-                            
-                            foreach ($roomTypeData['rooms'] as $roomData) {
-                                if (isset($roomData['id']) && $roomData['id']) {
-                                    // Mettre à jour une chambre existante
-                                    $room = $roomType->rooms()->find($roomData['id']);
-                                    if ($room) {
-                                        $room->update([
-                                            'room_number' => $roomData['room_number'],
-                                            'floor' => $roomData['floor'] ?? null,
-                                            'status' => $roomData['status'] ?? 'available',
-                                        ]);
-                                        $existingRoomIds[] = $room->id;
-                                    }
-                                } else {
-                                    // Créer une nouvelle chambre
-                                    $newRoom = $hotel->rooms()->create([
-                                        'room_type_id' => $roomType->id,
-                                        'room_number' => $roomData['room_number'],
-                                        'floor' => $roomData['floor'] ?? null,
-                                        'status' => $roomData['status'] ?? 'available',
-                                        'notes' => null,
-                                    ]);
-                                    $existingRoomIds[] = $newRoom->id;
-                                }
-                            }
-                            
-                            // Supprimer les chambres de ce type qui ne sont plus dans la liste
-                            if (!empty($existingRoomIds)) {
-                                $roomType->rooms()->whereNotIn('id', $existingRoomIds)->delete();
-                            } else {
-                                $roomType->rooms()->delete();
-                                }
-                        } else {
-                            // Si aucune chambre n'est spécifiée, supprimer toutes les chambres de ce type
-                            $roomType->rooms()->delete();
-                        }
-                    }
-                } else {
-                    // Créer un nouveau type
-                    $newRoomType = $hotel->roomTypes()->create([
-                        'name' => $roomTypeData['name'],
-                        'price' => $roomTypeData['price'],
-                        'description' => $roomTypeData['description'] ?? null,
-                        'capacity' => $roomTypeData['capacity'] ?? null,
-                        'is_available' => $roomTypeData['is_available'] ?? true,
-                    ]);
-                    $existingIds[] = $newRoomType->id;
-                    
-                    // Créer les chambres pour ce nouveau type
-                    if (isset($roomTypeData['rooms']) && is_array($roomTypeData['rooms'])) {
-                        foreach ($roomTypeData['rooms'] as $roomData) {
-                            $hotel->rooms()->create([
-                                'room_type_id' => $newRoomType->id,
-                                'room_number' => $roomData['room_number'],
-                                'floor' => $roomData['floor'] ?? null,
-                                'status' => $roomData['status'] ?? 'available',
-                                'notes' => null,
-                            ]);
-                        }
-                    }
-                }
-            }
-            
-            // Supprimer les types qui ne sont plus dans la liste
-            if (!empty($existingIds)) {
-                $hotel->roomTypes()->whereNotIn('id', $existingIds)->delete();
-            } else {
-                // Si plus aucun type, tout supprimer
-                $hotel->roomTypes()->delete();
-            }
-        }
-        // Note: Si room_types n'est pas dans la requête, on ne touche pas aux types existants
-        
-        // Redirection intelligente : retour à la page précédente si c'était show, sinon vers index
-        $previousUrl = $request->headers->get('referer');
-        if ($previousUrl && str_contains($previousUrl, "/super/hotels/{$hotel->id}")) {
-            return redirect()->route('super.hotels.show', $hotel)->with('success', 'Hôtel mis à jour avec succès');
-        }
-        
-        return redirect()->route('super.hotels.index')->with('success', 'Hôtel mis à jour avec succès');
+        return redirect()->route('super.hotels.show', $hotel)
+            ->with('success', 'Hôtel modifié avec succès');
+    }
+
+    /**
+     * Mise à jour des modules activés pour un hôtel (SuperAdmin).
+     */
+    public function updateModules(Request $request, Hotel $hotel)
+    {
+        $request->validate([
+            'modules' => 'nullable|array',
+            'modules.housekeeping' => 'nullable|boolean',
+            'modules.laundry' => 'nullable|boolean',
+        ]);
+
+        $settings = $hotel->settings ?? [];
+        $settings['modules'] = $settings['modules'] ?? [];
+        $settings['modules']['housekeeping'] = (bool) ($request->input('modules.housekeeping', false));
+        $settings['modules']['laundry'] = (bool) ($request->input('modules.laundry', false));
+        $hotel->update(['settings' => $settings]);
+
+        ActivityLog::log(
+            "Modules de l'hôtel mis à jour : {$hotel->name}",
+            $hotel,
+            [
+                'action_type' => 'hotel_modules_updated',
+                'hotel_name' => $hotel->name,
+                'modules' => $settings['modules'],
+            ],
+            'application',
+            'updated'
+        );
+
+        return redirect()->route('super.hotels.show', $hotel)
+            ->with('success', 'Modules mis à jour.');
     }
 
     public function destroy(Hotel $hotel)
     {
+        // Supprimer le logo si existe
+        if ($hotel->logo) {
+            $logoPath = public_path($hotel->logo);
+            // Compatibilité avec anciens chemins
+            if (strpos($hotel->logo, 'storage/') === 0 || strpos($hotel->logo, 'hotels/') === 0) {
+                $logoPath = public_path('images/logos/' . basename($hotel->logo));
+            }
+            if (File::exists($logoPath)) {
+                File::delete($logoPath);
+            }
+        }
+        
         $hotel->delete();
-        return redirect()->route('super.hotels.index')->with('success', 'Hôtel supprimé');
-    }
-    
-    /**
-     * Récupérer les types de chambre d'un hôtel avec leurs chambres
-     */
-    public function getRoomTypes(Hotel $hotel)
-    {
-        // Nettoyer tout output buffer pour éviter les BOM
-        if (ob_get_length()) ob_clean();
-        $roomTypes = $hotel->roomTypes()->with('rooms')->get();
-        return response()->json($roomTypes, 200, [], JSON_UNESCAPED_UNICODE);
-    }
-    
-    /**
-     * Initialiser les champs de formulaire prédéfinis pour un hôtel
-     */
-    private function initializeFormFields(Hotel $hotel)
-    {
-        // Vérifier si l'hôtel a déjà des champs
-        if ($hotel->formFields()->count() > 0) {
-            return;
-        }
         
-        $fields = [
-            // Type de réservation
-            ['label' => 'Type de réservation', 'key' => 'type_reservation', 'type' => 'select', 'required' => true, 'position' => 1],
-            
-            // Informations personnelles  
-            ['label' => 'Type de pièce d\'identité', 'key' => 'type_piece_identite', 'type' => 'select', 'required' => true, 'position' => 10],
-            ['label' => 'Numéro de pièce d\'identité', 'key' => 'numero_piece_identite', 'type' => 'text', 'required' => true, 'position' => 11],
-            ['label' => 'Nom de famille', 'key' => 'nom', 'type' => 'text', 'required' => true, 'position' => 12],
-            ['label' => 'Prénom(s)', 'key' => 'prenom', 'type' => 'text', 'required' => true, 'position' => 13],
-            ['label' => 'Date de naissance', 'key' => 'date_naissance', 'type' => 'date', 'required' => true, 'position' => 14],
-            ['label' => 'Nationalité', 'key' => 'nationalite', 'type' => 'text', 'required' => true, 'position' => 15],
-            
-            // Coordonnées
-            ['label' => 'Téléphone', 'key' => 'telephone', 'type' => 'tel', 'required' => true, 'position' => 20],
-            ['label' => 'Email', 'key' => 'email', 'type' => 'email', 'required' => true, 'position' => 21],
-            
-            // Séjour
-            ['label' => 'Date d\'arrivée', 'key' => 'date_arrivee', 'type' => 'date', 'required' => true, 'position' => 30],
-            ['label' => 'Date de départ', 'key' => 'date_depart', 'type' => 'date', 'required' => true, 'position' => 31],
-            ['label' => 'Nombre d\'adultes', 'key' => 'nombre_adultes', 'type' => 'number', 'required' => true, 'position' => 32],
-            ['label' => 'Nombre d\'enfants', 'key' => 'nombre_enfants', 'type' => 'number', 'required' => false, 'position' => 33],
-            ['label' => 'Type de chambre', 'key' => 'type_chambre', 'type' => 'select', 'required' => true, 'position' => 34],
-        ];
-        
-        foreach ($fields as $field) {
-            FormField::create([
-                'hotel_id' => $hotel->id,
-                'label' => $field['label'],
-                'key' => $field['key'],
-                'type' => $field['type'],
-                'required' => $field['required'],
-                'position' => $field['position'],
-                'active' => true,
-                'options' => null,
-            ]);
-        }
+        return redirect()->route('super.hotels.index')
+            ->with('success', 'Hôtel supprimé avec succès');
     }
 
-    /**
-     * Supprimer plusieurs hôtels
-     */
     public function destroyMultiple(Request $request)
     {
         $request->validate([
@@ -349,69 +434,61 @@ class HotelController extends Controller
             'hotel_ids.*' => 'exists:hotels,id',
         ]);
 
+        $hotelIds = $request->hotel_ids;
+        $deleted = 0;
+
         try {
             DB::beginTransaction();
-            
-            $hotelIds = $request->hotel_ids;
-            $deleted = 0;
 
             foreach ($hotelIds as $hotelId) {
-                try {
-                    $hotel = Hotel::findOrFail($hotelId);
-                    
-                    // Récupérer les IDs des réservations avant de les supprimer
-                    $reservationIds = Reservation::withoutGlobalScopes()->where('hotel_id', $hotel->id)->pluck('id')->toArray();
-                    
-                    // Supprimer les signatures et documents d'identité
-                    if (!empty($reservationIds)) {
-                        Signature::whereIn('reservation_id', $reservationIds)->delete();
-                        IdentityDocument::whereIn('reservation_id', $reservationIds)->delete();
+                $hotel = Hotel::findOrFail($hotelId);
+
+                // Supprimer le logo si existe
+                if ($hotel->logo) {
+                    $logoPath = public_path($hotel->logo);
+                    // Compatibilité avec anciens chemins
+                    if (strpos($hotel->logo, 'storage/') === 0 || strpos($hotel->logo, 'hotels/') === 0) {
+                        $logoPath = public_path('images/logos/' . basename($hotel->logo));
                     }
-                    
-                    // Supprimer les réservations
-                    Reservation::withoutGlobalScopes()->where('hotel_id', $hotel->id)->delete();
-                    
-                    // Supprimer les autres données associées
-                    $hotel->rooms()->delete();
-                    $hotel->roomTypes()->delete();
-                    $hotel->formFields()->delete();
-                    
-                    // Supprimer les clients
-                    \App\Models\Client::where('hotel_id', $hotel->id)->delete();
-                    
-                    // Supprimer les imprimantes
-                    Printer::where('hotel_id', $hotel->id)->delete();
-                    
-                    // Supprimer les paramètres
-                    Setting::where('hotel_id', $hotel->id)->delete();
-                    
-                    // Supprimer les logs
-                    \App\Models\PrintLog::where('hotel_id', $hotel->id)->delete();
-                    \App\Models\ActivityLog::where('hotel_id', $hotel->id)->delete();
-                    
-                    // Supprimer les utilisateurs (sauf super-admin)
-                    $hotel->users()->whereDoesntHave('roles', function($q) {
+                    if (File::exists($logoPath)) {
+                        File::delete($logoPath);
+                    }
+                }
+
+                // Récupérer les IDs de réservations pour suppressions associées
+                $reservationIds = Reservation::withoutGlobalScopes()->where('hotel_id', $hotel->id)->pluck('id');
+
+                // Supprimer les données associées dans l'ordre correct
+                if ($reservationIds->isNotEmpty()) {
+                    Signature::whereIn('reservation_id', $reservationIds)->delete();
+                    IdentityDocument::whereIn('reservation_id', $reservationIds)->delete();
+                }
+                Reservation::withoutGlobalScopes()->where('hotel_id', $hotel->id)->delete();
+                \App\Models\Client::where('hotel_id', $hotel->id)->delete();
+                Room::where('hotel_id', $hotel->id)->delete();
+                RoomType::where('hotel_id', $hotel->id)->delete();
+                DB::table('printers')->where('hotel_id', $hotel->id)->delete();
+                Setting::where('hotel_id', $hotel->id)->delete();
+                DB::table('form_fields')->where('hotel_id', $hotel->id)->delete();
+                User::where('hotel_id', $hotel->id)
+                    ->whereDoesntHave('roles', function($q) {
                         $q->where('name', 'super-admin');
                     })->delete();
-                    
-                    // Supprimer l'hôtel
-                    $hotel->delete();
-                    $deleted++;
-                } catch (\Exception $e) {
-                    \Log::error('Erreur lors de la suppression de l\'hôtel ID: ' . $hotelId, [
-                        'error' => $e->getMessage(),
-                    ]);
-                    // Continuer avec les autres hôtels même en cas d'erreur
-                }
+                DB::table('print_logs')->where('hotel_id', $hotel->id)->delete();
+                \App\Models\ActivityLog::where('hotel_id', $hotel->id)->delete();
+
+                // Supprimer l'hôtel
+                $hotel->delete();
+                $deleted++;
             }
 
-            DB::commit();
+            \Illuminate\Support\Facades\Cache::flush();
 
+            DB::commit();
             return redirect()->route('super.hotels.index')
-                ->with('success', "✅ {$deleted} hôtel(s) supprimé(s) avec succès.");
+                ->with('success', "✅ {$deleted} hôtel(s) supprimé(s) avec succès. Toutes les données associées ont été purgées.");
         } catch (\Exception $e) {
             DB::rollBack();
-            
             \Log::error('Erreur lors de la suppression multiple des hôtels', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
@@ -420,5 +497,20 @@ class HotelController extends Controller
                 ->with('error', 'Erreur lors de la suppression : ' . $e->getMessage());
         }
     }
-}
 
+    protected function hexToRgb(string $hex): array
+    {
+        $hex = str_replace('#', '', trim($hex));
+        if (!preg_match('/^[0-9A-Fa-f]{3}$|^[0-9A-Fa-f]{6}$/', $hex)) {
+            return [34, 34, 34]; // Default dark gray
+        }
+        if (strlen($hex) == 3) {
+            $hex = $hex[0] . $hex[0] . $hex[1] . $hex[1] . $hex[2] . $hex[2];
+        }
+        return [
+            hexdec(substr($hex, 0, 2)),
+            hexdec(substr($hex, 2, 2)),
+            hexdec(substr($hex, 4, 2))
+        ];
+    }
+}

@@ -48,16 +48,16 @@
         <div class="card-body p-0">
             @if($roomTypes->count() > 0)
                 <div class="table-responsive">
-                    <table class="table modern-table mb-0">
-                        <thead>
+                    <table class="table table-sm table-hover table-striped align-middle mb-0 modern-table app-table" aria-label="Liste des types de chambres">
+                        <thead class="table-light">
                             <tr>
-                                <th><i class="bi bi-hash"></i> ID</th>
-                                <th><i class="bi bi-door-open"></i> Nom</th>
-                                <th><i class="bi bi-currency-euro"></i> Prix/Nuit</th>
-                                <th><i class="bi bi-people"></i> Capacité</th>
-                                <th><i class="bi bi-key"></i> Chambres</th>
-                                <th><i class="bi bi-toggle-on"></i> Statut</th>
-                                <th class="text-end"><i class="bi bi-gear"></i> Actions</th>
+                                <th scope="col"><i class="bi bi-hash me-1 text-muted"></i>ID</th>
+                                <th scope="col"><i class="bi bi-door-open me-1 text-muted"></i>Nom</th>
+                                <th scope="col" class="d-none d-lg-table-cell"><i class="bi bi-currency-euro me-1 text-muted"></i>Prix/Nuit</th>
+                                <th scope="col" class="d-none d-md-table-cell"><i class="bi bi-people me-1 text-muted"></i>Capacité</th>
+                                <th scope="col"><i class="bi bi-key me-1 text-muted"></i>Chambres</th>
+                                <th scope="col" class="table-cell-state"><i class="bi bi-toggle-on me-1 text-muted"></i>Statut</th>
+                                <th scope="col" class="text-end table-actions-cell" style="width: 160px;"><i class="bi bi-gear me-1 text-muted"></i>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -90,7 +90,7 @@
                                     <td>
                                         <span class="badge bg-info">{{ $type->rooms_count }} chambres</span>
                                     </td>
-                                    <td>
+                                    <td class="table-cell-state">
                                         <form action="{{ route('hotel.room-types.toggle', $type) }}" method="POST" class="d-inline">
                                             @csrf
                                             @method('PATCH')
@@ -100,7 +100,7 @@
                                             </button>
                                         </form>
                                     </td>
-                                    <td class="text-end">
+                                    <td class="text-end table-actions-cell">
                                         <div class="btn-group btn-group-sm">
                                             <a href="{{ route('hotel.room-types.show', $type) }}" 
                                                class="btn btn-outline-info" 
@@ -138,16 +138,17 @@
                     </table>
                 </div>
             @else
-                <div class="text-center py-5">
-                    <div class="icon-container icon-xl bg-primary-soft mb-3 mx-auto" style="width: 80px; height: 80px;">
-                        <i class="bi bi-door-open icon-xxl"></i>
-                    </div>
-                    <h5 class="text-muted">Aucun type de chambre</h5>
-                    <p class="text-muted">Créez votre premier type de chambre pour commencer.</p>
-                    <a href="{{ route('hotel.room-types.create') }}" class="btn btn-primary btn-modern">
-                        <i class="bi bi-plus-circle"></i> Créer le Premier Type
-                    </a>
-                </div>
+                <x-super.empty-table
+                    icon="bi-door-open"
+                    title="Aucun type de chambre"
+                    message="Créez votre premier type de chambre pour commencer."
+                >
+                    <x-slot:action>
+                        <a href="{{ route('hotel.room-types.create') }}" class="btn btn-primary btn-modern">
+                            <i class="bi bi-plus-circle"></i> Créer le premier type
+                        </a>
+                    </x-slot:action>
+                </x-super.empty-table>
             @endif
         </div>
     </div>

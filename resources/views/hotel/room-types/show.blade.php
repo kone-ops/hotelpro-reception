@@ -38,7 +38,7 @@
                             <div>
                                 @if($roomType->is_available)
                                     <span class="badge bg-success fs-6">
-                                        <i class="bi bi-check-circle me-1"></i>Disponible pour réservation
+                                        <i class="bi bi-check-circle me-1"></i>Disponible pour enregistrement
                                     </span>
                                 @else
                                     <span class="badge bg-secondary fs-6">
@@ -62,12 +62,12 @@
                 <div class="card-body">
                     @if($roomType->rooms->count() > 0)
                         <div class="table-responsive">
-                            <table class="table modern-table mb-0">
-                                <thead>
+                            <table class="table table-sm table-hover table-striped align-middle mb-0 modern-table app-table" aria-label="Chambres de ce type">
+                                <thead class="table-light">
                                     <tr>
-                                        <th><i class="bi bi-hash"></i> Numéro</th>
-                                        <th><i class="bi bi-building"></i> Étage</th>
-                                        <th><i class="bi bi-toggles"></i> Statut</th>
+                                        <th scope="col"><i class="bi bi-hash me-1 text-muted"></i>Numéro</th>
+                                        <th scope="col"><i class="bi bi-building me-1 text-muted"></i>Étage</th>
+                                        <th scope="col"><i class="bi bi-toggles me-1 text-muted"></i>Statut</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -95,16 +95,17 @@
                             </table>
                         </div>
                     @else
-                        <div class="text-center py-5">
-                            <div class="icon-container icon-xl bg-secondary-soft mb-3 mx-auto" style="width: 80px; height: 80px;">
-                                <i class="bi bi-key icon-xxl"></i>
-                            </div>
-                            <h5 class="text-muted">Aucune chambre</h5>
-                            <p class="text-muted">Aucune chambre n'a encore été créée pour ce type.</p>
-                            <a href="{{ route('hotel.rooms.create') }}" class="btn btn-primary btn-modern">
-                                <i class="bi bi-plus-circle"></i> Créer une Chambre
-                            </a>
-                        </div>
+                        <x-super.empty-table
+                            icon="bi-key"
+                            title="Aucune chambre"
+                            message="Aucune chambre n'a encore été créée pour ce type."
+                        >
+                            <x-slot:action>
+                                <a href="{{ route('hotel.rooms.create') }}" class="btn btn-primary btn-modern">
+                                    <i class="bi bi-plus-circle"></i> Créer une chambre
+                                </a>
+                            </x-slot:action>
+                        </x-super.empty-table>
                     @endif
                 </div>
             </div>

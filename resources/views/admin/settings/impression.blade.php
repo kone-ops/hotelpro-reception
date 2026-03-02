@@ -77,7 +77,7 @@
                                         </div>
                                         <p class="text-muted mb-0">
                                             <i class="bi bi-info-circle me-1"></i>
-                                            Exiger une signature numérique dans le formulaire de pré-réservation
+                                            Exiger une signature numérique dans le formulaire de pré-enregistrement
                                         </p>
                                     </div>
                                 </div>

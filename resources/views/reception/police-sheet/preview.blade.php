@@ -158,7 +158,7 @@
                             @endforeach
                         </div>
                         
-                        <!-- Informations de réservation -->
+                        <!-- Informations d'enregistrement -->
                         <div class="mb-3">
                             <div class="row mb-1">
                                 <div class="col-6">

@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 
 namespace App\Services;
 
@@ -13,19 +13,19 @@ use App\Mail\ReservationValidated;
 use App\Mail\ReservationRejected;
 
 /**
- * Service de gestion des pré-réservations
+ * Service de gestion des réservations
  * Centralise toute la logique métier
  */
 class ReservationService
 {
     /**
-     * Créer une nouvelle pré-réservation avec documents
+     * Créer une nouvelle réservation avec documents
      */
     public function create(Hotel $hotel, array $data, array $documents = [], ?string $signature = null): Reservation
     {
         return DB::transaction(function () use ($hotel, $data, $documents, $signature) {
-            // Créer la pré-réservation
-            $Reservation = $hotel->Reservations()->create([
+            // Créer la réservation
+            $reservation = $hotel->reservations()->create([
                 'status' => 'pending',
                 'data' => $data,
                 'group_code' => $data['type_reservation'] === 'groupe' ? $data['code_groupe'] : null,
@@ -33,61 +33,61 @@ class ReservationService
 
             // Sauvegarder les documents d'identité
             if (!empty($documents)) {
-                $this->saveIdentityDocuments($Reservation, $documents);
+                $this->saveIdentityDocuments($reservation, $documents);
             }
 
             // Sauvegarder la signature
             if ($signature) {
-                $this->saveSignature($Reservation, $signature);
+                $this->saveSignature($reservation, $signature);
             }
 
-            Log::info('Pré-réservation créée', [
-                'id' => $Reservation->id,
+            Log::info('Réservation créée', [
+                'id' => $reservation->id,
                 'hotel_id' => $hotel->id,
                 'type' => $data['type_reservation'] ?? 'Individuel',
             ]);
 
-            return $Reservation;
+            return $reservation;
         });
     }
 
     /**
-     * Mettre à jour une pré-réservation
+     * Mettre à jour une réservation
      */
-    public function update(Reservation $Reservation, array $data): Reservation
+    public function update(Reservation $reservation, array $data): Reservation
     {
-        DB::transaction(function () use ($Reservation, $data) {
-            $Reservation->update([
+        DB::transaction(function () use ($reservation, $data) {
+            $reservation->update([
                 'data' => $data,
                 'group_code' => $data['type_reservation'] === 'groupe' ? $data['code_groupe'] : null,
             ]);
 
-            Log::info('Pré-réservation modifiée', [
-                'id' => $Reservation->id,
+            Log::info('Réservation modifiée', [
+                'id' => $reservation->id,
                 'modified_by' => auth()->id(),
             ]);
         });
 
-        return $Reservation->fresh();
+        return $reservation->fresh();
     }
 
     /**
-     * Valider une pré-réservation
+     * Valider une réservation
      */
-    public function validate(Reservation $Reservation, int $validatedBy): bool
+    public function validate(Reservation $reservation, int $validatedBy): bool
     {
-        return DB::transaction(function () use ($Reservation, $validatedBy) {
-            $Reservation->update([
+        return DB::transaction(function () use ($reservation, $validatedBy) {
+            $reservation->update([
                 'status' => 'validated',
                 'validated_at' => now(),
                 'validated_by' => $validatedBy,
             ]);
 
             // Envoyer email de confirmation
-            $this->sendValidationEmail($Reservation);
+            $this->sendValidationEmail($reservation);
 
-            Log::info('Pré-réservation validée', [
-                'id' => $Reservation->id,
+            Log::info('Réservation validée', [
+                'id' => $reservation->id,
                 'validated_by' => $validatedBy,
             ]);
 
@@ -96,21 +96,21 @@ class ReservationService
     }
 
     /**
-     * Rejeter une pré-réservation
+     * Rejeter une réservation
      */
-    public function reject(Reservation $Reservation, int $rejectedBy, ?string $reason = null): bool
+    public function reject(Reservation $reservation, int $rejectedBy, ?string $reason = null): bool
     {
-        return DB::transaction(function () use ($Reservation, $rejectedBy, $reason) {
-            $Reservation->update([
+        return DB::transaction(function () use ($reservation, $rejectedBy, $reason) {
+            $reservation->update([
                 'status' => 'rejected',
                 'validated_by' => $rejectedBy,
             ]);
 
             // Envoyer email de rejet
-            $this->sendRejectionEmail($Reservation, $reason);
+            $this->sendRejectionEmail($reservation, $reason);
 
-            Log::info('Pré-réservation rejetée', [
-                'id' => $Reservation->id,
+            Log::info('Réservation rejetée', [
+                'id' => $reservation->id,
                 'rejected_by' => $rejectedBy,
                 'reason' => $reason,
             ]);
@@ -122,16 +122,16 @@ class ReservationService
     /**
      * Remettre en attente
      */
-    public function setPending(Reservation $Reservation): bool
+    public function setPending(Reservation $reservation): bool
     {
-        $Reservation->update([
+        $reservation->update([
             'status' => 'pending',
             'validated_by' => null,
             'validated_at' => null,
         ]);
 
-        Log::info('Pré-réservation remise en attente', [
-            'id' => $Reservation->id,
+        Log::info('Réservation remise en attente', [
+            'id' => $reservation->id,
         ]);
 
         return true;
@@ -143,15 +143,15 @@ class ReservationService
     public function getHotelStats(Hotel $hotel): array
     {
         return [
-            'total' => $hotel->Reservations()->count(),
-            'pending' => $hotel->Reservations()->where('status', 'pending')->count(),
-            'validated' => $hotel->Reservations()->where('status', 'validated')->count(),
-            'rejected' => $hotel->Reservations()->where('status', 'rejected')->count(),
-            'individual' => $hotel->Reservations()->individual()->count(),
-            'group' => $hotel->Reservations()->group()->count(),
-            'today' => $hotel->Reservations()->whereDate('created_at', today())->count(),
-            'this_week' => $hotel->Reservations()->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()])->count(),
-            'this_month' => $hotel->Reservations()->whereMonth('created_at', now()->month)->count(),
+            'total' => $hotel->reservations()->count(),
+            'pending' => $hotel->reservations()->where('status', 'pending')->count(),
+            'validated' => $hotel->reservations()->where('status', 'validated')->count(),
+            'rejected' => $hotel->reservations()->where('status', 'rejected')->count(),
+            'individual' => $hotel->reservations()->individual()->count(),
+            'group' => $hotel->reservations()->group()->count(),
+            'today' => $hotel->reservations()->whereDate('created_at', today())->count(),
+            'this_week' => $hotel->reservations()->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()])->count(),
+            'this_month' => $hotel->reservations()->whereMonth('created_at', now()->month)->count(),
         ];
     }
 
@@ -160,7 +160,7 @@ class ReservationService
      */
     public function search(Hotel $hotel, array $filters)
     {
-        $query = $hotel->Reservations();
+        $query = $hotel->reservations();
 
         // Filtre par statut
         if (!empty($filters['status'])) {
@@ -203,7 +203,7 @@ class ReservationService
     /**
      * Sauvegarder les documents d'identité
      */
-    private function saveIdentityDocuments(Reservation $Reservation, array $documents): void
+    private function saveIdentityDocuments(Reservation $reservation, array $documents): void
     {
         if (isset($documents['front'])) {
             $frontPath = $documents['front']->store('identity_documents', 'public');
@@ -213,7 +213,7 @@ class ReservationService
             $backPath = $documents['back']->store('identity_documents', 'public');
         }
 
-        $Reservation->identityDocument()->create([
+        $reservation->identityDocument()->create([
             'type' => $documents['type'] ?? 'unknown',
             'front_path' => $frontPath ?? null,
             'back_path' => $backPath ?? null,
@@ -223,9 +223,9 @@ class ReservationService
     /**
      * Sauvegarder la signature
      */
-    private function saveSignature(Reservation $Reservation, string $signatureBase64): void
+    private function saveSignature(Reservation $reservation, string $signatureBase64): void
     {
-        $Reservation->signature()->create([
+        $reservation->signature()->create([
             'image_base64' => $signatureBase64,
         ]);
     }
@@ -233,22 +233,22 @@ class ReservationService
     /**
      * Envoyer email de validation
      */
-    private function sendValidationEmail(Reservation $Reservation): void
+    private function sendValidationEmail(Reservation $reservation): void
     {
         try {
-            $email = $Reservation->data['email'] ?? null;
-            
+            $email = $reservation->data['email'] ?? null;
+
             if ($email) {
-                Mail::to($email)->send(new ReservationValidated($Reservation));
-                
+                Mail::to($email)->send(new ReservationValidated($reservation));
+
                 Log::info('Email de validation envoyé', [
-                    'reservation_id' => $Reservation->id,
+                    'reservation_id' => $reservation->id,
                     'email' => $email,
                 ]);
             }
         } catch (\Exception $e) {
             Log::error('Erreur envoi email validation', [
-                'reservation_id' => $Reservation->id,
+                'reservation_id' => $reservation->id,
                 'error' => $e->getMessage(),
             ]);
         }
@@ -257,29 +257,25 @@ class ReservationService
     /**
      * Envoyer email de rejet
      */
-    private function sendRejectionEmail(Reservation $Reservation, ?string $reason): void
+    private function sendRejectionEmail(Reservation $reservation, ?string $reason): void
     {
         try {
-            $email = $Reservation->data['email'] ?? null;
-            
+            $email = $reservation->data['email'] ?? null;
+
             if ($email) {
-                Mail::to($email)->send(new ReservationRejected($Reservation, $reason));
-                
+                Mail::to($email)->send(new ReservationRejected($reservation, $reason));
+
                 Log::info('Email de rejet envoyé', [
-                    'reservation_id' => $Reservation->id,
+                    'reservation_id' => $reservation->id,
                     'email' => $email,
                 ]);
             }
         } catch (\Exception $e) {
             Log::error('Erreur envoi email rejet', [
-                'reservation_id' => $Reservation->id,
+                'reservation_id' => $reservation->id,
                 'error' => $e->getMessage(),
             ]);
         }
     }
 }
-
-
-
-
 

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Confirmation de Réservation</title>
+    <title>Confirmation d'enregistrement</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -159,10 +159,10 @@
             @endphp
 
             <div class="confirmation-box">
-                <h2 style="margin-top: 0; color: {{ $reservation->hotel->primary_color ?? '#1a4b8c' }};">Réservation Confirmée!!!</h2>
+                <h2 style="margin-top: 0; color: {{ $reservation->hotel->primary_color ?? '#1a4b8c' }};">Enregistrement confirmé!!!</h2>
                 <p style="font-size: 18px; margin: 10px 0;"><strong>Bravo {{ $prenom }} {{ $nom }}!</strong></p>
                 <div class="reservation-number">
-                    Votre Réservation N.{{ str_pad($reservation->id, 7, '0', STR_PAD_LEFT) }} a été confirmée.
+                    Votre enregistrement N.{{ str_pad($reservation->id, 7, '0', STR_PAD_LEFT) }} a été confirmée.
                 </div>
             </div>
 
@@ -197,8 +197,8 @@
 
             <!-- Téléchargement PDF -->
             <div class="download-box">
-                <h3 style="margin-top: 0; color: {{ $reservation->hotel->primary_color ?? '#1a4b8c' }};">📄 Télécharger votre Réservation</h3>
-                <p>Veuillez télécharger votre Réservation en fichier PDF attaché.</p>
+                <h3 style="margin-top: 0; color: {{ $reservation->hotel->primary_color ?? '#1a4b8c' }};">📄 Télécharger votre enregistrement</h3>
+                <p>Veuillez télécharger votre enregistrement en fichier PDF attaché.</p>
             </div>
 
             <div class="divider"></div>

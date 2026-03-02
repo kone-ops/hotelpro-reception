@@ -141,7 +141,7 @@
 					</div>
 					<div class="mb-3">
 						<strong>Formulaire</strong><br>
-						<small class="text-muted">Un formulaire de pré-réservation sera configuré</small>
+						<small class="text-muted">Un formulaire de pré-enregistrement sera configuré</small>
 					</div>
 					<div class="mb-3">
 						<strong>Synchronisation</strong><br>

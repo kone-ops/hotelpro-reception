@@ -855,12 +855,12 @@ function createActivityItem(activity) {
 	let eventBadge = '';
 	if (actionType) {
 		const actionLabels = {
-			'reservation_validated': 'Validation de réservation',
-			'reservation_rejected': 'Rejet de réservation',
+			'reservation_validated': 'Validation d\'enregistrement',
+			'reservation_rejected': 'Rejet d\'enregistrement',
 			'reservation_checkin': 'Check-in',
 			'reservation_checkout': 'Check-out',
 			'reservation_pending': 'Remise en attente',
-			'reservation_updated': 'Modification de réservation',
+			'reservation_updated': 'Modification d\'enregistrement',
 			'room_status_changed': 'Changement statut chambre',
 			'price_modified': 'Modification de prix',
 			'payment_received': 'Paiement reçu',

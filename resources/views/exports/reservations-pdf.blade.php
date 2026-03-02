@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Export Pré-réservations</title>
+    <title>Export Pré-enregistrements</title>
     <style>
         body {
             font-family: 'DejaVu Sans', sans-serif;
@@ -77,9 +77,9 @@
 </head>
 <body>
     <div class="header">
-        <h1>📋 Export des Pré-réservations</h1>
+        <h1>📋 Export des Pré-enregistrements</h1>
         <p>Généré le {{ $exportDate }}</p>
-        <p>Total: {{ $reservations->count() }} réservation(s)</p>
+        <p>Total: {{ $reservations->count() }} enregistrement(s)</p>
     </div>
 
     <table>

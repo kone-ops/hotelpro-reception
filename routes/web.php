@@ -12,6 +12,16 @@ Route::get('/', function () {
     return redirect()->route('login');
 });
 
+// Changement de langue (stocké en session, redirection vers la page précédente ou dashboard)
+Route::get('/locale/{locale}', function (string $locale) {
+    $supported = \App\Http\Middleware\SetLocale::supportedLocales();
+    if (! in_array($locale, $supported, true)) {
+        abort(400, 'Locale not supported');
+    }
+    session()->put('locale', $locale);
+    return redirect()->back();
+})->name('locale.switch');
+
 // Redirection dynamique après login
 Route::get('/dashboard', function () {
     $user = auth()->user();
@@ -19,6 +29,9 @@ Route::get('/dashboard', function () {
     if ($user->hasRole('super-admin')) return redirect()->route('super.dashboard');
     if ($user->hasRole('hotel-admin')) return redirect()->route('hotel.dashboard');
     if ($user->hasRole('receptionist')) return redirect()->route('reception.dashboard');
+    if ($user->hasRole('housekeeping')) return redirect()->route('housekeeping.dashboard');
+    if ($user->hasRole('laundry')) return redirect()->route('laundry.dashboard');
+    if ($user->hasRole('maintenance')) return redirect()->route('maintenance.dashboard');
     return view('dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
@@ -29,6 +42,16 @@ Route::middleware(['auth', 'role:super-admin'])->prefix('super')->name('super.')
     Route::resource('hotels', \App\Http\Controllers\SuperAdmin\HotelController::class)->except(['create', 'edit']);
     Route::post('hotels/delete-multiple', [\App\Http\Controllers\SuperAdmin\HotelController::class, 'destroyMultiple'])->name('hotels.destroy-multiple');
     Route::get('hotels/{hotel}/room-types', [\App\Http\Controllers\SuperAdmin\HotelController::class, 'getRoomTypes'])->name('hotels.room-types');
+    // Types de linge (Buanderie) par hôtel
+    Route::get('hotels/{hotel}/laundry-item-types', [\App\Http\Controllers\SuperAdmin\LaundryItemTypeController::class, 'index'])->name('hotels.laundry-item-types.index');
+    Route::post('hotels/{hotel}/laundry-item-types', [\App\Http\Controllers\SuperAdmin\LaundryItemTypeController::class, 'store'])->name('hotels.laundry-item-types.store');
+    Route::put('hotels/{hotel}/laundry-item-types/{laundryItemType}', [\App\Http\Controllers\SuperAdmin\LaundryItemTypeController::class, 'update'])->name('hotels.laundry-item-types.update');
+    Route::delete('hotels/{hotel}/laundry-item-types/{laundryItemType}', [\App\Http\Controllers\SuperAdmin\LaundryItemTypeController::class, 'destroy'])->name('hotels.laundry-item-types.destroy');
+    Route::get('notifications', [\App\Http\Controllers\SuperAdmin\HotelNotificationController::class, 'index'])->name('notifications.index');
+    Route::get('modules', [\App\Http\Controllers\SuperAdmin\HotelController::class, 'modulesIndex'])->name('modules.index');
+    Route::put('hotels/{hotel}/modules', [\App\Http\Controllers\SuperAdmin\HotelController::class, 'updateModules'])->name('hotels.modules.update');
+    Route::get('hotels/{hotel}/notifications', [\App\Http\Controllers\SuperAdmin\HotelNotificationController::class, 'show'])->name('hotels.notifications.show');
+    Route::put('hotels/{hotel}/notifications', [\App\Http\Controllers\SuperAdmin\HotelNotificationController::class, 'update'])->name('hotels.notifications.update');
     
     // Hotel Design & Form Configuration
     Route::get('hotels/{hotel}/design', [\App\Http\Controllers\SuperAdmin\HotelDesignController::class, 'show'])->name('hotels.design');
@@ -70,6 +93,7 @@ Route::middleware(['auth', 'role:super-admin'])->prefix('super')->name('super.')
     
     // System Optimization
     Route::get('/optimization', [\App\Http\Controllers\SuperAdmin\OptimizationController::class, 'index'])->name('optimization.index');
+    Route::get('/optimization/stats', [\App\Http\Controllers\SuperAdmin\OptimizationController::class, 'getStats'])->name('optimization.stats');
     Route::post('/optimization/clear-caches', [\App\Http\Controllers\SuperAdmin\OptimizationController::class, 'clearCaches'])->name('optimization.clear-caches');
     Route::post('/optimization/optimize-database', [\App\Http\Controllers\SuperAdmin\OptimizationController::class, 'optimizeDatabase'])->name('optimization.optimize-database');
     Route::post('/optimization/clean-old-data', [\App\Http\Controllers\SuperAdmin\OptimizationController::class, 'cleanOldData'])->name('optimization.clean-old-data');
@@ -79,6 +103,15 @@ Route::middleware(['auth', 'role:super-admin'])->prefix('super')->name('super.')
     Route::get('/ui-settings', [\App\Http\Controllers\Super\UiSettingController::class, 'index'])->name('ui-settings.index');
     Route::put('/ui-settings', [\App\Http\Controllers\Super\UiSettingController::class, 'update'])->name('ui-settings.update');
     Route::post('/ui-settings/reset', [\App\Http\Controllers\Super\UiSettingController::class, 'reset'])->name('ui-settings.reset');
+    
+    // Paramètres applicatifs (super-admin)
+    Route::get('/settings', [\App\Http\Controllers\Admin\SettingsController::class, 'index'])->name('settings.index');
+    Route::put('/settings', [\App\Http\Controllers\Admin\SettingsController::class, 'update'])->name('settings.update');
+    Route::post('/settings/reset', [\App\Http\Controllers\Admin\SettingsController::class, 'reset'])->name('settings.reset');
+    Route::post('/settings/clear-cache', [\App\Http\Controllers\Admin\SettingsController::class, 'clearCache'])->name('settings.clear-cache');
+    Route::get('/settings/impression', [\App\Http\Controllers\SettingController::class, 'index'])->name('settings.impression');
+    Route::put('/settings/impression', [\App\Http\Controllers\SettingController::class, 'update'])->name('settings.impression.update');
+    Route::post('/settings/impression/reset', [\App\Http\Controllers\SettingController::class, 'reset'])->name('settings.impression.reset');
     
     // Global Database Management (Purge globale)
     Route::get('/database', [\App\Http\Controllers\SuperAdmin\DatabaseController::class, 'index'])->name('database.index');
@@ -118,6 +151,18 @@ Route::middleware(['auth', 'role:hotel-admin', 'hotel.access'])->prefix('hotel')
     Route::get('/rooms-bulk/create', [\App\Http\Controllers\HotelAdmin\RoomController::class, 'bulkCreate'])->name('rooms.bulk-create');
     Route::post('/rooms-bulk/store', [\App\Http\Controllers\HotelAdmin\RoomController::class, 'bulkStore'])->name('rooms.bulk-store');
     Route::patch('/rooms/{room}/status', [\App\Http\Controllers\HotelAdmin\RoomController::class, 'updateStatus'])->name('rooms.update-status');
+    // Espaces (même principe et contenus que Service technique)
+    Route::get('/areas', [\App\Modules\Maintenance\Controllers\MaintenanceAreaController::class, 'index'])->name('areas.index');
+    Route::get('/areas/{category}', [\App\Modules\Maintenance\Controllers\MaintenanceAreaController::class, 'category'])->name('areas.category');
+    Route::get('/areas/{category}/create', [\App\Modules\Maintenance\Controllers\MaintenanceAreaController::class, 'create'])->name('areas.create');
+    Route::post('/areas/{category}', [\App\Modules\Maintenance\Controllers\MaintenanceAreaController::class, 'store'])->name('areas.store');
+    Route::post('/area/{area}/state', [\App\Modules\Maintenance\Controllers\MaintenanceAreaController::class, 'updateState'])->name('areas.update-state');
+    Route::delete('/area/{area}', [\App\Modules\Maintenance\Controllers\MaintenanceAreaController::class, 'destroy'])->name('areas.destroy');
+    
+    // Paramètres d'impression (hotel-admin, même interface que super.settings.impression)
+    Route::get('/settings/impression', [\App\Http\Controllers\SettingController::class, 'index'])->name('settings.impression');
+    Route::put('/settings/impression', [\App\Http\Controllers\SettingController::class, 'update'])->name('settings.impression.update');
+    Route::post('/settings/impression/reset', [\App\Http\Controllers\SettingController::class, 'reset'])->name('settings.impression.reset');
     
     // ❌ Module "Gestion des formulaires" retiré (champs prédéfinis)
     // Route::get('/fields', [\App\Http\Controllers\HotelAdmin\FormFieldController::class, 'index'])->name('fields.index');
@@ -154,6 +199,86 @@ Route::middleware(['auth', 'reception.or.admin', 'hotel.access'])->prefix('recep
     
     // Clients en séjour
     Route::get('/guests/staying', [\App\Http\Controllers\Reception\GuestController::class, 'staying'])->name('guests.staying');
+
+    // Linge client – Liste, dépôt à la réception, marquer « client a récupéré »
+    Route::get('/client-linen/create', [\App\Http\Controllers\Reception\ClientLinenController::class, 'create'])->name('client-linen.create');
+    Route::get('/client-linen', [\App\Http\Controllers\Reception\ClientLinenController::class, 'index'])->name('client-linen.index');
+    Route::post('/client-linen', [\App\Http\Controllers\Reception\ClientLinenController::class, 'store'])->name('client-linen.store');
+    Route::post('/client-linen/{clientLinen}/mark-picked-up', [\App\Http\Controllers\Reception\ClientLinenController::class, 'markPickedUp'])->name('client-linen.mark-picked-up');
+    // Espaces (même principe et contenus que Service technique)
+    Route::get('/areas', [\App\Modules\Maintenance\Controllers\MaintenanceAreaController::class, 'index'])->name('areas.index');
+    Route::get('/areas/{category}', [\App\Modules\Maintenance\Controllers\MaintenanceAreaController::class, 'category'])->name('areas.category');
+    Route::get('/areas/{category}/create', [\App\Modules\Maintenance\Controllers\MaintenanceAreaController::class, 'create'])->name('areas.create');
+    Route::post('/areas/{category}', [\App\Modules\Maintenance\Controllers\MaintenanceAreaController::class, 'store'])->name('areas.store');
+    Route::post('/area/{area}/state', [\App\Modules\Maintenance\Controllers\MaintenanceAreaController::class, 'updateState'])->name('areas.update-state');
+    Route::delete('/area/{area}', [\App\Modules\Maintenance\Controllers\MaintenanceAreaController::class, 'destroy'])->name('areas.destroy');
+});
+
+// Routes Service des étages (Housekeeping) - Module app/Modules/Housekeeping
+Route::middleware(['auth', 'role:housekeeping', 'hotel.access'])->prefix('housekeeping')->name('housekeeping.')->group(function () {
+    Route::get('/', [\App\Modules\Housekeeping\Controllers\DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/rooms', [\App\Modules\Housekeeping\Controllers\RoomController::class, 'index'])->name('rooms.index');
+    Route::post('/rooms/{room}/start-cleaning', [\App\Modules\Housekeeping\Controllers\RoomController::class, 'startCleaning'])->name('rooms.start-cleaning');
+    Route::post('/rooms/{room}/complete-cleaning', [\App\Modules\Housekeeping\Controllers\RoomController::class, 'completeCleaning'])->name('rooms.complete-cleaning');
+    Route::get('/history', [\App\Modules\Housekeeping\Controllers\HistoryController::class, 'index'])->name('history.index');
+    // Linge client – Dépôt (linge trouvé en chambre, notifie la buanderie)
+    Route::get('/client-linen', [\App\Modules\Housekeeping\Controllers\ClientLinenController::class, 'create'])->name('client-linen.create');
+    Route::post('/client-linen', [\App\Modules\Housekeeping\Controllers\ClientLinenController::class, 'store'])->name('client-linen.store');
+    // Espaces (même principe et contenus que Service technique)
+    Route::get('/areas', [\App\Modules\Maintenance\Controllers\MaintenanceAreaController::class, 'index'])->name('areas.index');
+    Route::get('/areas/{category}', [\App\Modules\Maintenance\Controllers\MaintenanceAreaController::class, 'category'])->name('areas.category');
+    Route::get('/areas/{category}/create', [\App\Modules\Maintenance\Controllers\MaintenanceAreaController::class, 'create'])->name('areas.create');
+    Route::post('/areas/{category}', [\App\Modules\Maintenance\Controllers\MaintenanceAreaController::class, 'store'])->name('areas.store');
+    Route::post('/area/{area}/state', [\App\Modules\Maintenance\Controllers\MaintenanceAreaController::class, 'updateState'])->name('areas.update-state');
+    Route::delete('/area/{area}', [\App\Modules\Maintenance\Controllers\MaintenanceAreaController::class, 'destroy'])->name('areas.destroy');
+});
+
+// Routes Service technique (Maintenance) - Module app/Modules/Maintenance
+Route::middleware(['auth', 'role:maintenance', 'hotel.access'])->prefix('maintenance')->name('maintenance.')->group(function () {
+    Route::get('/', [\App\Modules\Maintenance\Controllers\DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/rooms', [\App\Modules\Maintenance\Controllers\RoomController::class, 'index'])->name('rooms.index');
+    Route::post('/rooms/{room}/technical-state', [\App\Modules\Maintenance\Controllers\RoomController::class, 'updateTechnicalState'])->name('rooms.update-technical-state');
+    Route::get('/history', [\App\Modules\Maintenance\Controllers\HistoryController::class, 'index'])->name('history.index');
+    // Pannes (signalées, en cours, résolues)
+    Route::get('/pannes', [\App\Modules\Maintenance\Controllers\PanneController::class, 'index'])->name('pannes.index');
+    Route::get('/pannes/create', [\App\Modules\Maintenance\Controllers\PanneController::class, 'create'])->name('pannes.create');
+    Route::post('/pannes', [\App\Modules\Maintenance\Controllers\PanneController::class, 'store'])->name('pannes.store');
+    Route::get('/pannes/{panne}', [\App\Modules\Maintenance\Controllers\PanneController::class, 'show'])->name('pannes.show');
+    Route::post('/pannes/{panne}/start', [\App\Modules\Maintenance\Controllers\PanneController::class, 'startMaintenance'])->name('pannes.start');
+    Route::post('/pannes/{panne}/resolve', [\App\Modules\Maintenance\Controllers\PanneController::class, 'resolve'])->name('pannes.resolve');
+    Route::post('/pannes/{panne}/note', [\App\Modules\Maintenance\Controllers\PanneController::class, 'addNote'])->name('pannes.note');
+    // Types et catégories de pannes
+    Route::get('/panne-types', [\App\Modules\Maintenance\Controllers\PanneTypeCategoryController::class, 'index'])->name('panne-types.index');
+    Route::post('/panne-categories', [\App\Modules\Maintenance\Controllers\PanneTypeCategoryController::class, 'storeCategory'])->name('panne-categories.store');
+    Route::put('/panne-categories/{panneCategory}', [\App\Modules\Maintenance\Controllers\PanneTypeCategoryController::class, 'updateCategory'])->name('panne-categories.update');
+    Route::delete('/panne-categories/{panneCategory}', [\App\Modules\Maintenance\Controllers\PanneTypeCategoryController::class, 'destroyCategory'])->name('panne-categories.destroy');
+    Route::post('/panne-types', [\App\Modules\Maintenance\Controllers\PanneTypeCategoryController::class, 'storeType'])->name('panne-types.store');
+    Route::put('/panne-types/{panneType}', [\App\Modules\Maintenance\Controllers\PanneTypeCategoryController::class, 'updateType'])->name('panne-types.update');
+    Route::delete('/panne-types/{panneType}', [\App\Modules\Maintenance\Controllers\PanneTypeCategoryController::class, 'destroyType'])->name('panne-types.destroy');
+    // Espaces (Espaces publics, techniques, extérieurs, Loisirs, Administration)
+    Route::get('/areas', [\App\Modules\Maintenance\Controllers\MaintenanceAreaController::class, 'index'])->name('areas.index');
+    Route::get('/areas/{category}', [\App\Modules\Maintenance\Controllers\MaintenanceAreaController::class, 'category'])->name('areas.category');
+    Route::get('/areas/{category}/create', [\App\Modules\Maintenance\Controllers\MaintenanceAreaController::class, 'create'])->name('areas.create');
+    Route::post('/areas/{category}', [\App\Modules\Maintenance\Controllers\MaintenanceAreaController::class, 'store'])->name('areas.store');
+    Route::post('/area/{area}/state', [\App\Modules\Maintenance\Controllers\MaintenanceAreaController::class, 'updateState'])->name('areas.update-state');
+    Route::delete('/area/{area}', [\App\Modules\Maintenance\Controllers\MaintenanceAreaController::class, 'destroy'])->name('areas.destroy');
+});
+
+// Routes Buanderie (Laundry) - Module app/Modules/Laundry
+Route::middleware(['auth', 'role:laundry', 'hotel.access'])->prefix('laundry')->name('laundry.')->group(function () {
+    Route::get('/', [\App\Modules\Laundry\Controllers\DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/collections', [\App\Modules\Laundry\Controllers\CollectionController::class, 'index'])->name('collections.index');
+    Route::get('/collections/{collection}', [\App\Modules\Laundry\Controllers\CollectionController::class, 'show'])->name('collections.show');
+    Route::put('/collections/{collection}', [\App\Modules\Laundry\Controllers\CollectionController::class, 'update'])->name('collections.update');
+    Route::post('/collections/{collection}/status', [\App\Modules\Laundry\Controllers\CollectionController::class, 'updateStatus'])->name('collections.update-status');
+    Route::get('/item-types', [\App\Modules\Laundry\Controllers\ItemTypeController::class, 'index'])->name('item-types.index');
+    Route::post('/item-types', [\App\Modules\Laundry\Controllers\ItemTypeController::class, 'store'])->name('item-types.store');
+    Route::put('/item-types/{itemType}', [\App\Modules\Laundry\Controllers\ItemTypeController::class, 'update'])->name('item-types.update');
+    Route::delete('/item-types/{itemType}', [\App\Modules\Laundry\Controllers\ItemTypeController::class, 'destroy'])->name('item-types.destroy');
+    Route::get('/history', [\App\Modules\Laundry\Controllers\HistoryController::class, 'index'])->name('history.index');
+    // Linge client (réception + chambre)
+    Route::get('/client-linen', [\App\Modules\Laundry\Controllers\ClientLinenController::class, 'index'])->name('client-linen.index');
+    Route::post('/client-linen/{clientLinen}/status', [\App\Modules\Laundry\Controllers\ClientLinenController::class, 'updateStatus'])->name('client-linen.update-status');
 });
 
 // Formulaire public (QR code) avec rate limiting

@@ -29,7 +29,7 @@
             <div class="alert alert-danger shadow-sm border-start border-5 border-danger" role="alert">
                 <div class="d-flex align-items-center">
                     <div class="me-3">
-                        <i class="bi bi-exclamation-triangle-fill text-danger" style="font-size: 2rem;"></i>
+                        <i class="bi bi-exclamation-triangle-fill text-danger stat-card-icon"></i>
                     </div>
                     <div>
                         <h5 class="alert-heading mb-2">
@@ -49,7 +49,7 @@
                 <div class="col-md-3 mb-3">
                     <div class="card text-white bg-primary shadow h-100">
                         <div class="card-body text-center">
-                            <i class="bi bi-building" style="font-size: 2rem;"></i>
+                            <i class="bi bi-building stat-card-icon"></i>
                             <h5 class="card-title mt-2">Hôtels</h5>
                             <h3 class="mb-0">{{ number_format($stats['total_hotels']) }}</h3>
                         </div>
@@ -58,7 +58,7 @@
                 <div class="col-md-3 mb-3">
                     <div class="card text-white bg-success shadow h-100">
                         <div class="card-body text-center">
-                            <i class="bi bi-people" style="font-size: 2rem;"></i>
+                            <i class="bi bi-people stat-card-icon"></i>
                             <h5 class="card-title mt-2">Utilisateurs</h5>
                             <h3 class="mb-0">{{ number_format($stats['total_users']) }}</h3>
                         </div>
@@ -67,8 +67,8 @@
                 <div class="col-md-3 mb-3">
                     <div class="card text-white bg-warning shadow h-100">
                         <div class="card-body text-center">
-                            <i class="bi bi-calendar-check" style="font-size: 2rem;"></i>
-                            <h5 class="card-title mt-2">Réservations</h5>
+                            <i class="bi bi-calendar-check stat-card-icon"></i>
+                            <h5 class="card-title mt-2">Enregistrements</h5>
                             <h3 class="mb-0">{{ number_format($stats['total_reservations']) }}</h3>
                         </div>
                     </div>
@@ -76,7 +76,7 @@
                 <div class="col-md-3 mb-3">
                     <div class="card text-white bg-info shadow h-100">
                         <div class="card-body text-center">
-                            <i class="bi bi-door-open" style="font-size: 2rem;"></i>
+                            <i class="bi bi-door-open stat-card-icon"></i>
                             <h5 class="card-title mt-2">Chambres</h5>
                             <h3 class="mb-0">{{ number_format($stats['total_rooms']) }}</h3>
                         </div>
@@ -88,25 +88,27 @@
                 <div class="col-md-3 mb-3">
                     <div class="card text-white bg-secondary shadow h-100">
                         <div class="card-body text-center">
-                            <i class="bi bi-shield-check" style="font-size: 2rem;"></i>
+                            <i class="bi bi-shield-check stat-card-icon"></i>
                             <h5 class="card-title mt-2">Super-Admins</h5>
                             <h3 class="mb-0">{{ number_format($stats['total_super_admins']) }}</h3>
                         </div>
                     </div>
                 </div>
+                @if($hasPrintersModule ?? false)
                 <div class="col-md-3 mb-3">
                     <div class="card text-white bg-dark shadow h-100">
                         <div class="card-body text-center">
-                            <i class="bi bi-printer" style="font-size: 2rem;"></i>
+                            <i class="bi bi-printer stat-card-icon"></i>
                             <h5 class="card-title mt-2">Imprimantes</h5>
-                            <h3 class="mb-0">{{ number_format($stats['total_printers']) }}</h3>
+                            <h3 class="mb-0">{{ number_format($stats['total_printers'] ?? 0) }}</h3>
                         </div>
                     </div>
                 </div>
+                @endif
                 <div class="col-md-3 mb-3">
                     <div class="card text-white bg-danger shadow h-100">
                         <div class="card-body text-center">
-                            <i class="bi bi-people-fill" style="font-size: 2rem;"></i>
+                            <i class="bi bi-people-fill stat-card-icon"></i>
                             <h5 class="card-title mt-2">Groupes</h5>
                             <h3 class="mb-0">{{ number_format($stats['total_groups']) }}</h3>
                         </div>
@@ -115,9 +117,29 @@
                 <div class="col-md-3 mb-3">
                     <div class="card text-white bg-primary shadow h-100">
                         <div class="card-body text-center">
-                            <i class="bi bi-person-badge" style="font-size: 2rem;"></i>
+                            <i class="bi bi-person-badge stat-card-icon"></i>
                             <h5 class="card-title mt-2">Clients</h5>
                             <h3 class="mb-0">{{ number_format($stats['total_clients']) }}</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="card text-white bg-info shadow h-100">
+                        <div class="card-body text-center">
+                            <i class="bi bi-bucket stat-card-icon"></i>
+                            <h5 class="card-title mt-2">Tâches étages</h5>
+                            <h3 class="mb-0">{{ number_format($stats['total_housekeeping_tasks'] ?? 0) }}</h3>
+                            <small class="opacity-75">{{ number_format($stats['total_room_state_history'] ?? 0) }} historiques d'états</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="card text-white bg-success shadow h-100">
+                        <div class="card-body text-center">
+                            <i class="bi bi-droplet stat-card-icon"></i>
+                            <h5 class="card-title mt-2">Buanderie</h5>
+                            <h3 class="mb-0">{{ number_format($stats['total_laundry_collections'] ?? 0) }}</h3>
+                            <small class="opacity-75">{{ number_format($stats['total_laundry_item_types'] ?? 0) }} types de linge</small>
                         </div>
                     </div>
                 </div>
@@ -132,12 +154,12 @@
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead>
+                        <table class="table table-sm table-hover table-striped align-middle mb-0 super-admin-table" aria-label="Comptes Super-Admin conservés lors de la purge globale">
+                            <thead class="table-light">
                                 <tr>
-                                    <th>Nom</th>
-                                    <th>Email</th>
-                                    <th>Statut</th>
+                                    <th scope="col"><i class="bi bi-person me-1 text-primary"></i>Nom</th>
+                                    <th scope="col"><i class="bi bi-envelope me-1 text-primary"></i>Email</th>
+                                    <th scope="col"><i class="bi bi-flag me-1 text-primary"></i>Statut</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -246,7 +268,7 @@
                             <ul class="mb-0 mt-2">
                                 <li>Tous les hôtels</li>
                                 <li>Tous les utilisateurs (sauf les super-admins)</li>
-                                <li>Toutes les réservations</li>
+                                <li>Tous les enregistrements</li>
                                 <li>Toutes les chambres et types de chambres</li>
                                 <li>Tous les clients, groupes, imprimantes, paramètres</li>
                                 <li>Tous les logs</li>

@@ -8,7 +8,7 @@
 				<div class="card-body">
 					<i class="bi bi-calendar-check text-primary" style="font-size: 2rem;"></i>
 					<h4 class="mt-2">{{ $hotel_stats['total_reservations'] }}</h4>
-					<p class="text-muted mb-0">Total réservations</p>
+					<p class="text-muted mb-0">Total enregistrements</p>
 				</div>
 			</div>
 		</div>
@@ -43,21 +43,21 @@
 
 	<div class="row">
 		<div class="col-md-8">
-			<!-- Réservations récentes -->
+			<!-- Enregistrements récents -->
 			<div class="card border-0 shadow-sm mb-4">
 				<div class="card-header bg-transparent">
-					<h5 class="mb-0">Réservations récentes</h5>
+					<h5 class="mb-0">Enregistrements récents</h5>
 				</div>
 				<div class="card-body">
 					@if($recent_reservations->count() > 0)
 						<div class="table-responsive">
-							<table class="table table-hover">
-								<thead>
+							<table class="table table-sm table-hover table-striped align-middle mb-0 super-admin-table" aria-label="Enregistrements récents de l'hôtel">
+								<thead class="table-light">
 									<tr>
-										<th>Date</th>
-										<th>Client</th>
-										<th>Email</th>
-										<th>Statut</th>
+										<th scope="col"><i class="bi bi-calendar3 me-1 text-primary"></i>Date</th>
+										<th scope="col"><i class="bi bi-person me-1 text-primary"></i>Client</th>
+										<th scope="col"><i class="bi bi-envelope me-1 text-primary"></i>Email</th>
+										<th scope="col"><i class="bi bi-flag me-1 text-primary"></i>Statut</th>
 									</tr>
 								</thead>
 								<tbody>
@@ -77,11 +77,11 @@
 							</table>
 						</div>
 					@else
-						<div class="text-center py-4">
-							<i class="bi bi-calendar-x text-muted" style="font-size: 3rem;"></i>
-							<h5 class="text-muted mt-3">Aucune réservation</h5>
-							<p class="text-muted">Les réservations de cet hôtel apparaîtront ici.</p>
-						</div>
+						<x-super.empty-table
+							icon="bi-calendar-x"
+							title="Aucun enregistrement"
+							message="Les enregistrements de cet hôtel apparaîtront ici."
+						/>
 					@endif
 				</div>
 			</div>

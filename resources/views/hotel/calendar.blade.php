@@ -1,19 +1,42 @@
 <x-app-layout>
     
-        <div class="d-flex justify-content-between align-items-center">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
             <h2 class="h4 mb-0">
-                <i class="bi bi-calendar3"></i> Calendrier des Réservations
+                <i class="bi bi-calendar3"></i> Calendrier des enregistrements
             </h2>
-            <div>
-                <button class="btn btn-sm btn-secondary" id="prevMonth">
-                    <i class="bi bi-chevron-left"></i> Mois précédent
-                </button>
-                <button class="btn btn-sm btn-primary" id="today">
-                    <i class="bi bi-calendar-check"></i> Aujourd'hui
-                </button>
-                <button class="btn btn-sm btn-secondary" id="nextMonth">
-                    Mois suivant <i class="bi bi-chevron-right"></i>
-                </button>
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <div class="d-flex align-items-center gap-2">
+                    <select class="form-select form-select-sm" id="monthSelect" style="width: auto;">
+                        <option value="0">Janvier</option>
+                        <option value="1">Février</option>
+                        <option value="2">Mars</option>
+                        <option value="3">Avril</option>
+                        <option value="4">Mai</option>
+                        <option value="5">Juin</option>
+                        <option value="6">Juillet</option>
+                        <option value="7">Août</option>
+                        <option value="8">Septembre</option>
+                        <option value="9">Octobre</option>
+                        <option value="10">Novembre</option>
+                        <option value="11">Décembre</option>
+                    </select>
+                    <select class="form-select form-select-sm" id="yearSelect" style="width: auto;">
+                        @for($year = now()->year - 5; $year <= now()->year + 5; $year++)
+                            <option value="{{ $year }}" {{ $year == now()->year ? 'selected' : '' }}>{{ $year }}</option>
+                        @endfor
+                    </select>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-sm btn-secondary" id="prevMonth">
+                        <i class="bi bi-chevron-left"></i> Précédent
+                    </button>
+                    <button class="btn btn-sm btn-primary" id="today">
+                        <i class="bi bi-calendar-check"></i> Aujourd'hui
+                    </button>
+                    <button class="btn btn-sm btn-secondary" id="nextMonth">
+                        Suivant <i class="bi bi-chevron-right"></i>
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -28,7 +51,7 @@
                         </div>
                         <div class="stat-info">
                             <div class="stat-value" id="stat-total">{{ $stats['total'] }}</div>
-                            <div class="stat-label">Réservations ce mois</div>
+                            <div class="stat-label">Enregistrements ce mois</div>
                         </div>
                     </div>
                 </div>
@@ -121,7 +144,7 @@
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="dayModalTitle">Réservations du jour</h5>
+                    <h5 class="modal-title" id="dayModalTitle">Enregistrements du jour</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body" id="dayModalBody">
@@ -293,7 +316,19 @@
     @push('scripts')
     <script>
         let currentDate = new Date();
-        const reservations = @json($reservations);
+        let reservations = @json($reservations);
+        
+        // Fonction pour charger les enregistrements depuis l'API
+        async function loadReservations(startDate, endDate) {
+            try {
+                const response = await fetch(`{{ route('hotel.calendar.reservations') }}?start=${startDate}&end=${endDate}`);
+                const data = await response.json();
+                reservations = data;
+                renderCalendar();
+            } catch (error) {
+                console.error('Erreur lors du chargement des enregistrements:', error);
+            }
+        }
 
         function renderCalendar() {
             const year = currentDate.getFullYear();
@@ -359,7 +394,7 @@
 
             const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 
-            // Trouver les réservations pour ce jour
+            // Trouver les enregistrements pour ce jour
             const dayReservations = reservations.filter(r => {
                 const checkIn = r.check_in_date;
                 const checkOut = r.check_out_date;
@@ -386,7 +421,8 @@
                         icon = '← ';
                     }
                     
-                    html += `<div class="event-badge ${eventClass}">${icon}${res.nom}</div>`;
+                    const clientName = (res.data?.prenom && res.data?.nom) ? `${res.data.prenom} ${res.data.nom}` : (res.client_full_name || 'Enregistrement');
+                    html += `<div class="event-badge ${eventClass}">${icon}${clientName}</div>`;
                 }
                 
                 html += '</div>';
@@ -405,7 +441,14 @@
         }
 
         function showDayDetails(date, reservations) {
-            const modal = new bootstrap.Modal(document.getElementById('dayDetailsModal'));
+            const modalEl = document.getElementById('dayDetailsModal');
+            const modal = new bootstrap.Modal(modalEl);
+            document.activeElement && document.activeElement.blur && document.activeElement.blur();
+            modalEl.addEventListener('shown.bs.modal', function onShown() {
+                modalEl.removeEventListener('shown.bs.modal', onShown);
+                const focusTarget = modalEl.querySelector('button[data-bs-dismiss="modal"]') || modalEl.querySelector('.btn') || modalEl;
+                if (focusTarget && typeof focusTarget.focus === 'function') focusTarget.focus();
+            });
             const formattedDate = new Date(date).toLocaleDateString('fr-FR', { 
                 weekday: 'long', 
                 year: 'numeric', 
@@ -413,11 +456,11 @@
                 day: 'numeric' 
             });
             
-            document.getElementById('dayModalTitle').textContent = `Réservations du ${formattedDate}`;
+            document.getElementById('dayModalTitle').textContent = `Enregistrements du ${formattedDate}`;
             
             let html = '';
             if (reservations.length === 0) {
-                html = '<p class="text-muted">Aucune réservation pour cette date.</p>';
+                html = '<p class="text-muted">Aucun enregistrement pour cette date.</p>';
             } else {
                 html += '<div class="list-group">';
                 reservations.forEach(res => {
@@ -458,23 +501,69 @@
             modal.show();
         }
 
+
+        // Fonction pour mettre à jour les sélecteurs
+        function updateSelectors() {
+            const monthSelect = document.getElementById('monthSelect');
+            const yearSelect = document.getElementById('yearSelect');
+            
+            if (monthSelect) {
+                monthSelect.value = currentDate.getMonth();
+            }
+            if (yearSelect) {
+                yearSelect.value = currentDate.getFullYear();
+            }
+        }
+
+        // Fonction pour charger les enregistrements et mettre à jour le calendrier
+        function navigateToMonth(year, month) {
+            currentDate = new Date(year, month, 1);
+            updateSelectors();
+            const startDate = new Date(year, month, 1).toISOString().split('T')[0];
+            const endDate = new Date(year, month + 1, 0).toISOString().split('T')[0];
+            loadReservations(startDate, endDate);
+        }
+
         // Navigation
         document.getElementById('prevMonth').addEventListener('click', () => {
-            currentDate.setMonth(currentDate.getMonth() - 1);
-            renderCalendar();
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+            navigateToMonth(year, month - 1);
         });
 
         document.getElementById('nextMonth').addEventListener('click', () => {
-            currentDate.setMonth(currentDate.getMonth() + 1);
-            renderCalendar();
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+            navigateToMonth(year, month + 1);
         });
 
         document.getElementById('today').addEventListener('click', () => {
-            currentDate = new Date();
-            renderCalendar();
+            const today = new Date();
+            navigateToMonth(today.getFullYear(), today.getMonth());
         });
 
+        // Sélection de mois
+        const monthSelect = document.getElementById('monthSelect');
+        if (monthSelect) {
+            monthSelect.addEventListener('change', () => {
+                const year = parseInt(document.getElementById('yearSelect').value);
+                const month = parseInt(monthSelect.value);
+                navigateToMonth(year, month);
+            });
+        }
+
+        // Sélection d'année
+        const yearSelect = document.getElementById('yearSelect');
+        if (yearSelect) {
+            yearSelect.addEventListener('change', () => {
+                const year = parseInt(yearSelect.value);
+                const month = parseInt(document.getElementById('monthSelect').value);
+                navigateToMonth(year, month);
+            });
+        }
+
         // Initialiser
+        updateSelectors();
         renderCalendar();
     </script>
     @endpush

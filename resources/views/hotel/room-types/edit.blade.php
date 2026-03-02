@@ -82,7 +82,7 @@
                                        {{ old('is_available', $roomType->is_available) ? 'checked' : '' }}>
                                 <label class="form-check-label" for="isAvailable">
                                     <i class="bi bi-check-circle icon-sm me-2"></i>
-                                    <strong>Type disponible pour les réservations</strong>
+                                    <strong>Type disponible pour les enregistrements</strong>
                                 </label>
                             </div>
                         </div>

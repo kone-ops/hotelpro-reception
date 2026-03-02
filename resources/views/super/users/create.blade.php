@@ -1,6 +1,14 @@
 <x-app-layout>
 	<x-slot name="header">Créer un nouvel utilisateur</x-slot>
-	
+	@php
+		$roleLabels = [
+			'super-admin' => 'Super Admin',
+			'hotel-admin' => 'Gérant d\'hôtel',
+			'receptionist' => 'Réceptionniste',
+			'housekeeping' => 'Service des étages',
+			'laundry' => 'Buanderie',
+		];
+	@endphp
 	<div class="row">
 		<div class="col-md-8">
 			<div class="card border-0 shadow-sm">
@@ -45,21 +53,17 @@
 						</div>
 						
 						<div class="mb-3">
-							<label class="form-label">Rôles *</label>
-							<div class="row">
+							<label class="form-label">Rôle *</label>
+							<select name="role" class="form-select" required>
+								<option value="">Sélectionner un rôle</option>
 								@foreach($roles as $role)
-									<div class="col-md-4">
-										<div class="form-check">
-											<input type="checkbox" name="roles[]" value="{{ $role->name }}" class="form-check-input" id="role_{{ $role->id }}"
-												{{ in_array($role->name, old('roles', [])) ? 'checked' : '' }}>
-											<label class="form-check-label" for="role_{{ $role->id }}">
-												{{ ucfirst(str_replace('_', ' ', $role->name)) }}
-											</label>
-										</div>
-									</div>
+									<option value="{{ $role->name }}" {{ old('role') === $role->name ? 'selected' : '' }}>
+										{{ $roleLabels[$role->name] ?? ucfirst(str_replace(['_', '-'], ' ', $role->name)) }}
+									</option>
 								@endforeach
-							</div>
-							@error('roles')<div class="text-danger small">{{ $message }}</div>@enderror
+							</select>
+							<small class="text-muted">L'hôtel est obligatoire pour tous les rôles sauf Super Admin.</small>
+							@error('role')<div class="text-danger small">{{ $message }}</div>@enderror
 						</div>
 						
 						<div class="d-flex gap-2">
@@ -82,15 +86,23 @@
 				<div class="card-body">
 					<div class="mb-3">
 						<strong class="text-danger">Super Admin</strong><br>
-						<small class="text-muted">Accès complet à tous les hôtels et fonctionnalités</small>
+						<small class="text-muted">Accès complet à tous les hôtels et fonctionnalités. Aucun hôtel assigné.</small>
 					</div>
 					<div class="mb-3">
 						<strong class="text-warning">Hotel Admin</strong><br>
-						<small class="text-muted">Gestion d'un hôtel spécifique</small>
+						<small class="text-muted">Gestion d'un hôtel (utilisateurs, paramètres, formulaires).</small>
 					</div>
 					<div class="mb-3">
-						<strong class="text-success">Réceptionniste</strong><br>
-						<small class="text-muted">Accès réception pour validation des arrivées</small>
+						<strong class="text-success">Receptionist</strong><br>
+						<small class="text-muted">Réception : enregistrements, check-in / check-out, validation des arrivées.</small>
+					</div>
+					<div class="mb-3">
+						<strong class="text-info">Service des étages</strong><br>
+						<small class="text-muted">Chambres à nettoyer, début/fin de nettoyage, historique de ses activités (filtrable par période).</small>
+					</div>
+					<div class="mb-3">
+						<strong class="text-primary">Buanderie</strong><br>
+						<small class="text-muted">Collectes de linge (linge d'étage), types de linge, statuts (en attente, en lavage, terminé), historique de ses activités (filtrable par période).</small>
 					</div>
 				</div>
 			</div>

@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Réservation - {{ $hotel->name }}</title>
+    <title>Enregistrement - {{ $hotel->name }}</title>
     <link href="{{ asset('assets/vendor/bootstrap/bootstrap.min.css') }}" rel="stylesheet">
     <link rel="stylesheet" href="{{ asset('assets/vendor/bootstrap-icons/bootstrap-icons.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/vendor/intl-tel-input/css/intlTelInput.css') }}">
@@ -174,7 +174,7 @@
             border-radius: 0 10px 10px 0;
         }
         
-        /* Radio buttons pour type de réservation */
+        /* Radio buttons pour type d'enregistrement */
         .reservation-type-cards {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -391,13 +391,13 @@
             color: #333;
         }
         
-        /* Conditional fields */
+        /* Champs conditionnels (affichés par le JS après sélection) */
         .conditional-field {
             display: none;
         }
         
         .conditional-field.show {
-            display: block;
+            display: block !important;
         }
         
         /* Loading */
@@ -475,7 +475,7 @@
                     </div>
                 @endif
                 <h1>{{ $hotel->name }}</h1>
-                <p><i class="bi bi-geo-alt"></i> Formulaire de Réservation</p>
+                <p><i class="bi bi-geo-alt"></i> Formulaire d'enregistrement</p>
             </div>
             
             <div class="form-body">
@@ -495,103 +495,17 @@
                                 <li>{{ $error }}</li>
                             @endforeach
                         </ul>
+                        @if($errors->has('piece_identite_recto') || $errors->has('piece_identite_verso') || $errors->has('photo_recto') || $errors->has('photo_verso'))
+                        <p class="mb-0 mt-2 text-dark"><strong>Note :</strong> Les fichiers que vous aviez choisis n’ont pas été conservés (retour après erreur). Veuillez <strong>télécharger à nouveau</strong> le recto et/ou le verso de votre pièce d’identité ci-dessous.</p>
+                        @endif
                         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                     </div>
+                    @if($errors->has('piece_identite_recto') || $errors->has('piece_identite_verso') || $errors->has('photo_recto') || $errors->has('photo_verso'))
+                    <script>window.formHasPieceIdentiteErrors = true;</script>
+                    @endif
                 @endif
 
-                @php
-                    // Fonction helper pour afficher un champ personnalisé
-                    function renderCustomField($field, $formConfig) {
-                        $colClass = $field->type === 'textarea' ? 'col-md-12' : 'col-md-6';
-                        $html = '<div class="' . $colClass . ' mb-3">';
-                        $html .= '<label class="form-label">';
-                        $html .= htmlspecialchars($field->label);
-                        $html .= $formConfig->getRequiredStar($field->key);
-                        $html .= '</label>';
-                        
-                        if ($field->type === 'textarea') {
-                            $html .= '<textarea name="' . htmlspecialchars($field->key) . '" class="form-control" rows="3" ' . $formConfig->getRequiredAttribute($field->key) . '></textarea>';
-                        } elseif ($field->type === 'select') {
-                            $html .= '<select name="' . htmlspecialchars($field->key) . '" class="form-select" ' . $formConfig->getRequiredAttribute($field->key) . '>';
-                            $html .= '<option value="">-- Sélectionner --</option>';
-                            if ($field->options) {
-                                foreach ($field->options as $option) {
-                                    $html .= '<option value="' . htmlspecialchars($option) . '">' . htmlspecialchars($option) . '</option>';
-                                }
-                            }
-                            $html .= '</select>';
-                        } elseif ($field->type === 'radio') {
-                            $html .= '<div>';
-                            if ($field->options) {
-                                foreach ($field->options as $index => $option) {
-                                    $html .= '<div class="form-check">';
-                                    $html .= '<input class="form-check-input" type="radio" name="' . htmlspecialchars($field->key) . '" id="' . htmlspecialchars($field->key) . '_' . $index . '" value="' . htmlspecialchars($option) . '" ' . $formConfig->getRequiredAttribute($field->key) . '>';
-                                    $html .= '<label class="form-check-label" for="' . htmlspecialchars($field->key) . '_' . $index . '">' . htmlspecialchars($option) . '</label>';
-                                    $html .= '</div>';
-                                }
-                            }
-                            $html .= '</div>';
-                        } elseif ($field->type === 'checkbox') {
-                            $html .= '<div class="form-check form-switch">';
-                            $html .= '<input class="form-check-input" type="checkbox" name="' . htmlspecialchars($field->key) . '" id="' . htmlspecialchars($field->key) . '" value="1" ' . $formConfig->getRequiredAttribute($field->key) . '>';
-                            $html .= '<label class="form-check-label" for="' . htmlspecialchars($field->key) . '">' . htmlspecialchars($field->label) . '</label>';
-                            $html .= '</div>';
-                        } else {
-                            $html .= '<input type="' . htmlspecialchars($field->type) . '" name="' . htmlspecialchars($field->key) . '" class="form-control" ' . $formConfig->getRequiredAttribute($field->key) . '>';
-                        }
-                        
-                        $html .= '</div>';
-                        return $html;
-                    }
-                    
-                    // Fonction pour obtenir les champs personnalisés à une position spécifique
-                    function getCustomFieldsAtPosition($customFields, $section, $position) {
-                        return $customFields->where('section', $section)
-                            ->where('active', true)
-                            ->filter(function($field) use ($position) {
-                                $fieldPos = (float) ($field->position ?? 0);
-                                // Accepter les champs à cette position exacte ou dans une plage proche (pour flexibilité)
-                                return abs($fieldPos - $position) < 0.1;
-                            })
-                            ->sortBy('position')
-                            ->values();
-                    }
-                    
-                    // Fonction pour afficher les champs personnalisés à une position spécifique
-                    function renderCustomFieldsAtPosition($customFields, $section, $position, $formConfig) {
-                        $fields = getCustomFieldsAtPosition($customFields, $section, $position);
-                        if ($fields->count() === 0) return '';
-                        
-                        $html = '<div class="row">';
-                        foreach ($fields as $field) {
-                            $html .= renderCustomField($field, $formConfig);
-                        }
-                        $html .= '</div>';
-                        return $html;
-                    }
-                    
-                    // Fonction helper pour afficher les champs personnalisés d'une section (pour les sections simples)
-                    function renderCustomFields($customFields, $section, $formConfig) {
-                        // Filtrer les champs par section et actifs, puis trier numériquement par position
-                        $fields = $customFields->where('section', $section)
-                            ->where('active', true)
-                            ->sortBy(function($field) {
-                                // Trier numériquement par position (0 si null)
-                                return (float) ($field->position ?? 0);
-                            })
-                            ->values(); // Réindexer la collection
-                        if ($fields->count() === 0) return '';
-                        
-                        $html = '<div class="row">';
-                        foreach ($fields as $field) {
-                            $html .= renderCustomField($field, $formConfig);
-                        }
-                        $html .= '</div>';
-                        return $html;
-                    }
-                    
-                    $customFields = $formConfig->getCustomFields();
-                @endphp
+                @php $customFields = $formConfig->getCustomFields(); @endphp
 
                 <form id="reservationForm" method="POST" action="{{ route('public.form.store', $hotel) }}" enctype="multipart/form-data">
                     @csrf
@@ -635,16 +549,16 @@
                         </div>
                         
                         <!-- Champs personnalisés de la section 0 -->
-                        {!! renderCustomFields($customFields, 0, $formConfig) !!}
+                        <x-public.custom-fields-list :customFields="$customFields" :section="0" :formConfig="$formConfig" />
                     </div>
                     
-                    <!-- SECTION 1: Type de Réservation -->
+                    <!-- SECTION 1: Type d'enregistrement -->
                     <div class="section-card">
                         <div class="section-header">
                             <div class="section-number">1</div>
                             <div>
-                                <h3 class="section-title">Type de Réservation</h3>
-                                <p class="section-subtitle">Choisissez votre type de réservation</p>
+                                <h3 class="section-title">Type d'enregistrement</h3>
+                                <p class="section-subtitle">Choisissez votre type d'enregistrement</p>
                             </div>
                         </div>
                         
@@ -667,7 +581,7 @@
                         <div id="groupeFields" class="conditional-field">
                             <div class="alert alert-info mb-3">
                                 <i class="bi bi-info-circle me-2"></i>
-                                Vous avez choisi une réservation de <strong>groupe</strong>. Veuillez renseigner les informations ci-dessous.
+                                Vous avez choisi un enregistrement de <strong>groupe</strong>. Veuillez renseigner les informations ci-dessous.
                             </div>
                             <div class="row">
                                 @if($formConfig->isVisible('nom_groupe'))
@@ -688,7 +602,7 @@
                         @endif
                         
                         <!-- Champs personnalisés de la section 1 -->
-                        {!! renderCustomFields($customFields, 1, $formConfig) !!}
+                        <x-public.custom-fields-list :customFields="$customFields" :section="1" :formConfig="$formConfig" />
                     </div>
 
                     <!-- SECTION 2: Informations Personnelles -->
@@ -723,7 +637,7 @@
                         </div>
                         
                         <!-- Champs personnalisés à la position 2.5 (après Numéro de Pièce d'Identité) -->
-                        {!! renderCustomFieldsAtPosition($customFields, 2, 2.5, $formConfig) !!}
+                        <x-public.custom-fields-list :customFields="$customFields" :section="2" :position="2.5" :formConfig="$formConfig" />
                         
                         <!-- Méthode d'upload (PC: Upload OU Caméra, Mobile: Upload seulement) -->
                         @if($formConfig->isVisible('piece_identite_recto') || $formConfig->isVisible('piece_identite_verso'))
@@ -749,7 +663,7 @@
                         <div id="uploadFilesSection" class="conditional-field">
                             <div class="row">
                                 @if($formConfig->isVisible('piece_identite_recto'))
-                                <div class="col-md-6 mb-3">
+                                <div class="{{ $formConfig->isVisible('piece_identite_verso') ? 'col-md-6' : 'col-12' }} mb-3">
                                     <label class="form-label">Pièce d'Identité (Recto) {!! $formConfig->getRequiredStar('piece_identite_recto') !!}</label>
                                     <input type="file" name="piece_identite_recto" id="fileRecto" class="form-control" accept="image/jpeg,image/png,image/webp,application/pdf,.jpg,.jpeg" {{ $formConfig->getRequiredAttribute('piece_identite_recto') }}>
                                     <small class="text-muted">JPG, PNG, WEBP ou PDF - Max 5MB</small>
@@ -757,7 +671,7 @@
                                 </div>
                                 @endif
                                 @if($formConfig->isVisible('piece_identite_verso'))
-                                <div class="col-md-6 mb-3">
+                                <div class="{{ $formConfig->isVisible('piece_identite_recto') ? 'col-md-6' : 'col-12' }} mb-3">
                                     <label class="form-label">Pièce d'Identité (Verso) {!! $formConfig->getRequiredStar('piece_identite_verso') !!}</label>
                                     <input type="file" name="piece_identite_verso" id="fileVerso" class="form-control" accept="image/jpeg,image/png,image/webp,application/pdf,.jpg,.jpeg" {{ $formConfig->getRequiredAttribute('piece_identite_verso') }}>
                                     <small class="text-muted">JPG, PNG, WEBP ou PDF - Max 5MB</small>
@@ -773,7 +687,7 @@
                         <div id="cameraSection" class="conditional-field">
                             <div class="row mb-3">
                                 @if($formConfig->isVisible('piece_identite_recto'))
-                                <div class="col-md-6 mb-3">
+                                <div class="{{ $formConfig->isVisible('piece_identite_verso') ? 'col-md-6' : 'col-12' }} mb-3">
                                     <label class="form-label">Photo Recto {!! $formConfig->getRequiredStar('piece_identite_recto') !!}</label>
                                     <div class="camera-preview" id="cameraPreviewRecto" style="display:none;">
                                         <video id="videoRecto" autoplay playsinline></video>
@@ -788,7 +702,7 @@
                                 </div>
                                 @endif
                                 @if($formConfig->isVisible('piece_identite_verso'))
-                                <div class="col-md-6 mb-3">
+                                <div class="{{ $formConfig->isVisible('piece_identite_recto') ? 'col-md-6' : 'col-12' }} mb-3">
                                     <label class="form-label">Photo Verso {!! $formConfig->getRequiredStar('piece_identite_verso') !!}</label>
                                     <div class="camera-preview" id="cameraPreviewVerso" style="display:none;">
                                         <video id="videoVerso" autoplay playsinline></video>
@@ -807,7 +721,7 @@
                         @endif
                         
                         <!-- Champs personnalisés à la position 3 (après les sections upload/camera) -->
-                        {!! renderCustomFieldsAtPosition($customFields, 2, 3, $formConfig) !!}
+                        <x-public.custom-fields-list :customFields="$customFields" :section="2" :position="3" :formConfig="$formConfig" />
                         
                         <div class="row">
                             <div class="col-md-6 mb-3">
@@ -825,7 +739,7 @@
                         </div>
                         
                         <!-- Champs personnalisés à la position 4 (après Nom/Prénom) -->
-                        {!! renderCustomFieldsAtPosition($customFields, 2, 4, $formConfig) !!}
+                        <x-public.custom-fields-list :customFields="$customFields" :section="2" :position="4" :formConfig="$formConfig" />
                         
                         <div class="row">
                             @if($formConfig->isVisible('sexe'))
@@ -857,7 +771,7 @@
                         </div>
                         
                         <!-- Champs personnalisés à la position 6 (après Sexe/Date/Lieu de naissance) -->
-                        {!! renderCustomFieldsAtPosition($customFields, 2, 6, $formConfig) !!}
+                        <x-public.custom-fields-list :customFields="$customFields" :section="2" :position="6" :formConfig="$formConfig" />
                         
                         @if($formConfig->isVisible('nationalite'))
                         <div class="mb-3">
@@ -869,10 +783,10 @@
                         @endif
                         
                         <!-- Champs personnalisés à la position 7 (après Nationalité) -->
-                        {!! renderCustomFieldsAtPosition($customFields, 2, 7, $formConfig) !!}
+                        <x-public.custom-fields-list :customFields="$customFields" :section="2" :position="7" :formConfig="$formConfig" />
                         
                         <!-- Champs personnalisés à la position 8 (fin de section) -->
-                        {!! renderCustomFieldsAtPosition($customFields, 2, 8, $formConfig) !!}
+                        <x-public.custom-fields-list :customFields="$customFields" :section="2" :position="8" :formConfig="$formConfig" />
                     </div>
 
                     <!-- SECTION 3: Coordonnées -->
@@ -923,7 +837,7 @@
                         @endif
                         
                         <!-- Champs personnalisés de la section 3 -->
-                        {!! renderCustomFields($customFields, 3, $formConfig) !!}
+                        <x-public.custom-fields-list :customFields="$customFields" :section="3" :formConfig="$formConfig" />
                     </div>
 
                     <!-- SECTION 4: Informations du Séjour -->
@@ -932,7 +846,7 @@
                             <div class="section-number">4</div>
                             <div>
                                 <h3 class="section-title">Informations du Séjour</h3>
-                                <p class="section-subtitle">Détails de votre réservation</p>
+                                <p class="section-subtitle">Détails de votre enregistrement</p>
                             </div>
                         </div>
                         
@@ -1070,7 +984,7 @@
                         </div>
                         
                         <!-- Champs personnalisés de la section 4 -->
-                        {!! renderCustomFields($customFields, 4, $formConfig) !!}
+                        <x-public.custom-fields-list :customFields="$customFields" :section="4" :formConfig="$formConfig" />
                     </div>
 
                     <!-- SECTION 5: Validation -->
@@ -1093,12 +1007,12 @@
                         <div class="form-check mb-3">
                             <input type="checkbox" name="acceptation_conditions" class="form-check-input" id="acceptCGU" required>
                             <label class="form-check-label" for="acceptCGU">
-                                <strong>J'accepte les conditions de réservation et la politique de confidentialité <span class="required">*</span></strong>
+                                <strong>J'accepte les conditions d'enregistrement et la politique de confidentialité <span class="required">*</span></strong>
                             </label>
                         </div>
                         
                         <!-- Champs personnalisés de la section 5 -->
-                        {!! renderCustomFields($customFields, 5, $formConfig) !!}
+                        <x-public.custom-fields-list :customFields="$customFields" :section="5" :formConfig="$formConfig" />
                     </div>
 
                     <!-- SECTION 6: Signature -->
@@ -1127,7 +1041,7 @@
                         </div>
                         
                         <!-- Champs personnalisés de la section 6 -->
-                        {!! renderCustomFields($customFields, 6, $formConfig) !!}
+                        <x-public.custom-fields-list :customFields="$customFields" :section="6" :formConfig="$formConfig" />
                     </div>
                     @endif
 
@@ -1177,8 +1091,8 @@
         </div>
     </div>
 
-    <!-- Loading Overlay -->
-    <div class="loading-overlay" id="loadingOverlay">
+    <!-- Loading Overlay (focusable pour éviter aria-hidden sur l'élément ayant le focus) -->
+    <div class="loading-overlay" id="loadingOverlay" tabindex="-1" aria-live="polite" aria-busy="true">
         <div class="text-center text-white">
             <div class="spinner-border mb-3" role="status"></div>
             <h5>Envoi en cours...</h5>
@@ -1287,7 +1201,7 @@
                             <div class="alert alert-success mb-0">
                                 <i class="bi bi-check-circle me-2"></i>
                                 <strong>Client trouvé :</strong> ${data.client.full_name}<br>
-                                <small>${data.client.reservations_count} réservation(s) précédente(s)</small>
+                                <small>${data.client.reservations_count} enregistrement(s) précédent(s)</small>
                             </div>
                         `;
                         
@@ -1526,6 +1440,12 @@
             console.log(`Image ${side} en cours de chargement depuis:`, imageUrl);
         }
         
+        // Configuration du formulaire (visibilité des champs définie par le super admin) — disponible dès le chargement du script
+        window.formConfig = {
+            pieceIdentiteRectoVisible: @json($formConfig->isVisible('piece_identite_recto')),
+            pieceIdentiteVersoVisible: @json($formConfig->isVisible('piece_identite_verso'))
+        };
+        
         // Initialisation au chargement de la page
         document.addEventListener('DOMContentLoaded', function() {
             console.log('═══════════════════════════════════════');
@@ -1708,8 +1628,11 @@
             loadFormData();
             
             // Sauvegarder automatiquement à chaque changement
-            document.getElementById(formId).addEventListener('input', saveFormData);
-            document.getElementById(formId).addEventListener('change', saveFormData);
+            const formEl = document.getElementById(formId);
+            if (formEl) {
+                formEl.addEventListener('input', saveFormData);
+                formEl.addEventListener('change', saveFormData);
+            }
             
             // Effacer les données après envoi réussi
             @if(session('success'))
@@ -1974,6 +1897,19 @@
             const photoRectoData = document.getElementById('photoRectoData');
             const photoVersoData = document.getElementById('photoVersoData');
             
+            // Quand l'utilisateur sélectionne un type de pièce, afficher tout de suite la section "Télécharger"
+            // pour que le champ fichier recto soit visible (évite l'erreur recto si l'utilisateur oublie de cliquer sur "Télécharger")
+            if (typePieceSelect && uploadMethodBtn && uploadFilesSection) {
+                typePieceSelect.addEventListener('change', function applyDefaultUploadSection() {
+                    if (!this.value) return;
+                    uploadMethodBtn.classList.add('active');
+                    if (cameraMethodBtn) cameraMethodBtn.classList.remove('active');
+                    uploadFilesSection.classList.add('show');
+                    if (cameraSection) cameraSection.classList.remove('show');
+                    if (typeof toggleRequiredFields === 'function') toggleRequiredFields();
+                });
+            }
+            
             // Fonction pour désactiver/activer les champs requis selon la section visible
             function toggleRequiredFields() {
                 const isUploadVisible = uploadFilesSection && uploadFilesSection.classList.contains('show');
@@ -2022,6 +1958,34 @@
                     if (uploadFilesSection) uploadFilesSection.classList.remove('show');
                     toggleRequiredFields();
                 });
+            }
+            
+            // Si un type de pièce est déjà sélectionné (données restaurées ou retour après erreur de validation),
+            // afficher par défaut la section "Télécharger" pour que les champs fichier soient visibles
+            // et éviter l'erreur "Veuillez fournir une pièce d'identité (recto)..."
+            if (typePieceSelect && typePieceSelect.value && uploadMethodBtn && uploadFilesSection) {
+                uploadMethodBtn.classList.add('active');
+                if (cameraMethodBtn) cameraMethodBtn.classList.remove('active');
+                uploadFilesSection.classList.add('show');
+                if (cameraSection) cameraSection.classList.remove('show');
+            }
+            
+            // Retour après erreur de validation sur recto/verso : afficher la section pièce d'identité et scroller
+            // (les fichiers ne peuvent pas être restaurés par le navigateur, l'utilisateur doit les re-télécharger)
+            if (window.formHasPieceIdentiteErrors && uploadMethodSection) {
+                uploadMethodSection.classList.add('show');
+                if (uploadMethodBtn) {
+                    uploadMethodBtn.classList.add('active');
+                    if (cameraMethodBtn) cameraMethodBtn.classList.remove('active');
+                }
+                if (uploadFilesSection) uploadFilesSection.classList.add('show');
+                if (cameraSection) cameraSection.classList.remove('show');
+                if (typeof toggleRequiredFields === 'function') toggleRequiredFields();
+                setTimeout(function() {
+                    const el = document.getElementById('uploadFilesSection');
+                    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 300);
+                window.formHasPieceIdentiteErrors = false;
             }
             
             // Initialiser l'état des champs requis
@@ -2436,31 +2400,30 @@
                             return false;
                         }
                         
-                        // Vérifier la pièce d'identité recto (requis)
+                        // Vérifier la pièce d'identité recto (requis) : on accepte dès qu'il y a un fichier OU des données photo
                         @if($formConfig->isRequired('piece_identite_recto'))
-                        const isUploadVisible = uploadFilesSection && uploadFilesSection.classList.contains('show');
-                        const isCameraVisible = cameraSection && cameraSection.classList.contains('show');
                         const hasFileRecto = fileRecto && fileRecto.files && fileRecto.files.length > 0;
                         const hasPhotoRecto = photoRectoData && photoRectoData.value && photoRectoData.value.trim() !== '';
-                        
-                        if ((isUploadVisible && !hasFileRecto) || (isCameraVisible && !hasPhotoRecto)) {
+                        const hasValidRecto = hasFileRecto || hasPhotoRecto;
+                        if (!hasValidRecto) {
                             e.preventDefault();
                             showAlert('Veuillez fournir une pièce d\'identité (recto) en téléchargeant un fichier ou en prenant une photo.', 'error');
-                            
-                            // Afficher la section appropriée et mettre en focus
-                            if (!isUploadVisible && !isCameraVisible) {
-                                // Aucune méthode sélectionnée, afficher la section upload par défaut
-                                if (uploadMethodBtn) {
-                                    uploadMethodBtn.click();
-                                }
-                            }
-                            
-                            if (isUploadVisible && fileRecto) {
-                                fileRecto.focus();
-                            } else if (isCameraVisible && startCameraRectoBtn) {
-                                startCameraRectoBtn.focus();
-                            }
-                            
+                            if (uploadFilesSection && !uploadFilesSection.classList.contains('show') && uploadMethodBtn) uploadMethodBtn.click();
+                            if (fileRecto) fileRecto.focus();
+                            return false;
+                        }
+                        @endif
+                        
+                        // Vérifier la pièce d'identité verso (requis)
+                        @if($formConfig->isRequired('piece_identite_verso'))
+                        const hasFileVerso = fileVerso && fileVerso.files && fileVerso.files.length > 0;
+                        const hasPhotoVerso = photoVersoData && photoVersoData.value && photoVersoData.value.trim() !== '';
+                        const hasValidVerso = hasFileVerso || hasPhotoVerso;
+                        if (!hasValidVerso) {
+                            e.preventDefault();
+                            showAlert('Veuillez fournir une pièce d\'identité (verso) en téléchargeant un fichier ou en prenant une photo.', 'error');
+                            if (uploadFilesSection && !uploadFilesSection.classList.contains('show') && uploadMethodBtn) uploadMethodBtn.click();
+                            if (fileVerso) fileVerso.focus();
                             return false;
                         }
                         @endif
@@ -2613,7 +2576,7 @@
                     }
                     
                     if (calculatedAge < 18) {
-                        showAlert('Vous devez avoir au moins 18 ans pour effectuer une réservation.', 'warning');
+                        showAlert('Vous devez avoir au moins 18 ans pour effectuer un enregistrement.', 'warning');
                         this.value = '';
                     } else if (calculatedAge > 120) {
                         showAlert('La date de naissance n\'est pas valide.', 'error');
@@ -2627,43 +2590,37 @@
             const accompagnantsFields = document.getElementById('accompagnantsFields');
             const accompagnantsContainer = document.getElementById('accompagnantsContainer');
             
-            nombreAdultes.addEventListener('change', function() {
-                const nbAdultes = parseInt(this.value) || 1;
-                console.log('Nombre adultes:', nbAdultes);
-                
+            function updateAccompagnantsSection() {
+                if (!accompagnantsFields || !accompagnantsContainer) return;
+                const nbAdultes = parseInt(nombreAdultes?.value, 10) || 1;
                 if (nbAdultes >= 2) {
-                    // Afficher la section accompagnants
                     accompagnantsFields.classList.add('show');
-                    
-                    // Générer les champs pour les accompagnants (nbAdultes - 1)
                     const nbAccompagnants = nbAdultes - 1;
                     accompagnantsContainer.innerHTML = '';
-                    
                     for (let i = 1; i <= nbAccompagnants; i++) {
                         const accompagnantDiv = document.createElement('div');
                         accompagnantDiv.className = 'row mb-2';
                         accompagnantDiv.innerHTML = `
                             <div class="col-md-6">
-                                <input type="text" 
-                                       name="accompagnant_nom_${i}" 
-                                       class="form-control" 
-                                       placeholder="Nom de l'accompagnant ${i}">
+                                <input type="text" name="accompagnant_nom_${i}" class="form-control" placeholder="Nom de l'accompagnant ${i}">
                             </div>
                             <div class="col-md-6">
-                                <input type="text" 
-                                       name="accompagnant_prenom_${i}" 
-                                       class="form-control" 
-                                       placeholder="Prénom de l'accompagnant ${i}">
+                                <input type="text" name="accompagnant_prenom_${i}" class="form-control" placeholder="Prénom de l'accompagnant ${i}">
                             </div>
                         `;
                         accompagnantsContainer.appendChild(accompagnantDiv);
                     }
                 } else {
-                    // Masquer la section accompagnants
                     accompagnantsFields.classList.remove('show');
                     accompagnantsContainer.innerHTML = '';
                 }
-            });
+            }
+            
+            if (nombreAdultes && accompagnantsFields && accompagnantsContainer) {
+                nombreAdultes.addEventListener('change', updateAccompagnantsSection);
+                nombreAdultes.addEventListener('input', updateAccompagnantsSection);
+                updateAccompagnantsSection();
+            }
             
             // Validation de l'email en temps réel
             const emailInput = document.getElementById('emailInput');
@@ -2810,28 +2767,38 @@
                 const uploadMethodBtnCheck = document.getElementById('uploadMethodBtn');
                 const startCameraRectoBtnCheck = document.getElementById('startCameraRectoBtn');
                 
-                if (uploadFilesSectionCheck && cameraSectionCheck && fileRectoCheck && photoRectoDataElCheck) {
-                    const isUploadVisible = uploadFilesSectionCheck.classList.contains('show');
-                    const isCameraVisible = cameraSectionCheck.classList.contains('show');
+                if (fileRectoCheck && photoRectoDataElCheck) {
                     const hasFileRecto = fileRectoCheck.files && fileRectoCheck.files.length > 0;
                     const hasPhotoRecto = photoRectoDataElCheck.value && photoRectoDataElCheck.value.trim() !== '';
-                    
-                    if ((isUploadVisible && !hasFileRecto) || (isCameraVisible && !hasPhotoRecto)) {
+                    const hasValidRecto = hasFileRecto || hasPhotoRecto;
+                    if (!hasValidRecto) {
                         showAlert('Veuillez fournir une pièce d\'identité (recto) en téléchargeant un fichier ou en prenant une photo avant de continuer.', 'error');
-                        
-                        // Afficher la section appropriée
-                        if (!isUploadVisible && !isCameraVisible) {
-                            if (uploadMethodBtnCheck) {
-                                uploadMethodBtnCheck.click();
-                            }
+                        if (!uploadFilesSectionCheck || !uploadFilesSectionCheck.classList.contains('show')) {
+                            if (uploadMethodBtnCheck) uploadMethodBtnCheck.click();
                         }
-                        
-                        if (isUploadVisible && fileRectoCheck) {
-                            fileRectoCheck.focus();
-                        } else if (isCameraVisible && startCameraRectoBtnCheck) {
-                            startCameraRectoBtnCheck.focus();
+                        if (fileRectoCheck) fileRectoCheck.focus();
+                        return;
+                    }
+                }
+                @endif
+                
+                // Vérifier la pièce d'identité verso avant validation HTML5
+                @if($formConfig->isRequired('piece_identite_verso'))
+                const uploadFilesSectionCheckVerso = document.getElementById('uploadFilesSection');
+                const fileVersoCheck = document.getElementById('fileVerso');
+                const photoVersoDataElCheck = document.getElementById('photoVersoData');
+                const uploadMethodBtnCheckVerso = document.getElementById('uploadMethodBtn');
+                
+                if (fileVersoCheck && photoVersoDataElCheck) {
+                    const hasFileVerso = fileVersoCheck.files && fileVersoCheck.files.length > 0;
+                    const hasPhotoVerso = photoVersoDataElCheck.value && photoVersoDataElCheck.value.trim() !== '';
+                    const hasValidVerso = hasFileVerso || hasPhotoVerso;
+                    if (!hasValidVerso) {
+                        showAlert('Veuillez fournir une pièce d\'identité (verso) en téléchargeant un fichier ou en prenant une photo avant de continuer.', 'error');
+                        if (!uploadFilesSectionCheckVerso || !uploadFilesSectionCheckVerso.classList.contains('show')) {
+                            if (uploadMethodBtnCheckVerso) uploadMethodBtnCheckVerso.click();
                         }
-                        
+                        if (fileVersoCheck) fileVersoCheck.focus();
                         return;
                     }
                 }
@@ -2859,9 +2826,9 @@
                 const formData = new FormData(form);
                 let previewHTML = '';
                 
-                // Section Type de réservation
+                // Section Type d'enregistrement
                 previewHTML += '<div class="preview-section">';
-                previewHTML += '<h6><i class="bi bi-bookmark me-2"></i>Type de Réservation</h6>';
+                previewHTML += '<h6><i class="bi bi-bookmark me-2"></i>Type d\'enregistrement</h6>';
                 previewHTML += '<div class="preview-row"><div class="preview-label">Type:</div><div class="preview-value">' + formData.get('type_reservation') + '</div></div>';
                 if (formData.get('nom_groupe')) {
                     previewHTML += '<div class="preview-row"><div class="preview-label">Nom du Groupe:</div><div class="preview-value">' + formData.get('nom_groupe') + '</div></div>';
@@ -2875,13 +2842,17 @@
                 previewHTML += '<div class="preview-row"><div class="preview-label">Type Pièce:</div><div class="preview-value">' + formData.get('type_piece_identite') + '</div></div>';
                 previewHTML += '<div class="preview-row"><div class="preview-label">N° Pièce:</div><div class="preview-value">' + formData.get('numero_piece_identite') + '</div></div>';
                 
-                // Afficher les images des pièces d'identité
-                const photoRectoDataValue = document.getElementById('photoRectoData').value;
-                const photoVersoDataValue = document.getElementById('photoVersoData').value;
+                // Afficher les images des pièces d'identité (selon visibilité configurée en super admin)
+                const pieceRectoVisible = window.formConfig && window.formConfig.pieceIdentiteRectoVisible;
+                const pieceVersoVisible = window.formConfig && window.formConfig.pieceIdentiteVersoVisible;
+                const photoRectoEl = document.getElementById('photoRectoData');
+                const photoVersoEl = document.getElementById('photoVersoData');
+                const photoRectoDataValue = photoRectoEl ? photoRectoEl.value : '';
+                const photoVersoDataValue = pieceVersoVisible && photoVersoEl ? photoVersoEl.value : '';
                 const fileRectoInput = document.getElementById('fileRecto');
                 const fileVersoInput = document.getElementById('fileVerso');
                 
-                if (photoRectoDataValue || (fileRectoInput && fileRectoInput.files.length > 0)) {
+                if (pieceRectoVisible && (photoRectoDataValue || (fileRectoInput && fileRectoInput.files.length > 0))) {
                     previewHTML += '<div class="preview-row" style="grid-template-columns: 1fr; padding: 10px 0;">';
                     previewHTML += '<div class="preview-label mb-2"><strong>Pièce d\'Identité (Recto):</strong></div>';
                     if (photoRectoDataValue) {
@@ -2892,7 +2863,7 @@
                     previewHTML += '</div>';
                 }
                 
-                if (photoVersoDataValue || (fileVersoInput && fileVersoInput.files.length > 0)) {
+                if (pieceVersoVisible && (photoVersoDataValue || (fileVersoInput && fileVersoInput.files.length > 0))) {
                     previewHTML += '<div class="preview-row" style="grid-template-columns: 1fr; padding: 10px 0;">';
                     previewHTML += '<div class="preview-label mb-2"><strong>Pièce d\'Identité (Verso):</strong></div>';
                     if (photoVersoDataValue) {
@@ -3000,16 +2971,39 @@
                 
                 document.getElementById('previewContent').innerHTML = previewHTML;
                 
-                const modal = new bootstrap.Modal(document.getElementById('previewModal'));
+                const modalEl = document.getElementById('previewModal');
+                const modal = new bootstrap.Modal(modalEl);
+                // Retirer le focus du formulaire AVANT d'ouvrir la modal pour éviter "Blocked aria-hidden on an element because its descendant retained focus"
+                const activeEl = document.activeElement;
+                if (activeEl && activeEl.closest && activeEl.closest('.form-container')) {
+                    activeEl.blur();
+                }
+                modalEl.addEventListener('shown.bs.modal', function onShown() {
+                    modalEl.removeEventListener('shown.bs.modal', onShown);
+                    const focusTarget = modalEl.querySelector('button[data-bs-dismiss="modal"]') || modalEl.querySelector('#confirmSubmitBtn') || modalEl.querySelector('.btn-primary') || modalEl;
+                    if (focusTarget && typeof focusTarget.focus === 'function') {
+                        focusTarget.focus();
+                    }
+                });
                 modal.show();
             });
             
             // Fonction de confirmation et envoi
             document.getElementById('confirmSubmitBtn').addEventListener('click', async function() {
                 console.log('Confirming and submitting...');
-                document.getElementById('loadingOverlay').classList.add('show');
+                const loadingOverlay = document.getElementById('loadingOverlay');
+                const previewModal = document.getElementById('previewModal');
+                loadingOverlay.classList.add('show');
+                loadingOverlay.focus();
                 
-                bootstrap.Modal.getInstance(document.getElementById('previewModal')).hide();
+                // Bootstrap restaure le focus à la fermeture : on le remet sur l'overlay pour éviter aria-hidden
+                function keepFocusOnOverlay() {
+                    previewModal.removeEventListener('hidden.bs.modal', keepFocusOnOverlay);
+                    loadingOverlay.focus();
+                }
+                previewModal.addEventListener('hidden.bs.modal', keepFocusOnOverlay);
+                
+                bootstrap.Modal.getInstance(previewModal).hide();
                 
                 // Rafraîchir le token CSRF avant la soumission pour éviter "page expired"
                 try {

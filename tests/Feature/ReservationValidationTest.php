@@ -3,12 +3,13 @@
 namespace Tests\Feature;
 
 use App\Models\Hotel;
+use App\Models\Reservation;
 use App\Models\User;
-use App\Models\PreReservation;
 use App\Models\Room;
 use App\Models\RoomType;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
+use PHPUnit\Framework\Attributes\Test;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
@@ -18,133 +19,121 @@ class ReservationValidationTest extends TestCase
 
     protected $hotel;
     protected $admin;
-    protected $preReservation;
+    protected $reservation;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        // Créer les rôles
-        Role::create(['name' => 'Super Admin']);
-        $hotelAdminRole = Role::create(['name' => 'Hotel Admin']);
-        Role::create(['name' => 'Reception']);
+        Role::create(['name' => 'super-admin']);
+        Role::create(['name' => 'hotel-admin']);
+        Role::create(['name' => 'receptionist']);
 
-        // Créer un hôtel
         $this->hotel = Hotel::factory()->create();
-
-        // Créer un type de chambre et une chambre
-        $roomType = RoomType::factory()->create([
-            'hotel_id' => $this->hotel->id,
-        ]);
-
+        $roomType = RoomType::factory()->create(['hotel_id' => $this->hotel->id]);
         $room = Room::factory()->create([
             'hotel_id' => $this->hotel->id,
             'room_type_id' => $roomType->id,
             'status' => 'available',
         ]);
 
-        // Créer un admin
-        $this->admin = User::factory()->create([
-            'hotel_id' => $this->hotel->id,
-        ]);
-        $this->admin->assignRole($hotelAdminRole);
+        $this->admin = User::factory()->create(['hotel_id' => $this->hotel->id]);
+        $this->admin->assignRole('hotel-admin');
 
-        // Créer une pré-réservation
-        $this->preReservation = PreReservation::factory()->create([
+        $this->reservation = Reservation::withoutGlobalScopes()->create([
             'hotel_id' => $this->hotel->id,
             'room_type_id' => $roomType->id,
             'room_id' => $room->id,
-            'statut' => 'pending',
+            'status' => 'pending',
+            'data' => ['nom' => 'Dupont', 'prenom' => 'Jean', 'email' => 'jean@test.com'],
+            'check_in_date' => now(),
+            'check_out_date' => now()->addDays(2),
         ]);
     }
 
-    /** @test */
-    public function hotel_admin_can_validate_reservation()
+    #[Test]
+    public function hotel_admin_can_validate_reservation(): void
     {
         Mail::fake();
-
         $this->actingAs($this->admin);
 
-        $response = $this->post(route('hotel.reservations.validate', $this->preReservation->id));
+        $response = $this->post(route('hotel.reservations.validate', $this->reservation->id));
 
         $response->assertRedirect();
         $response->assertSessionHas('success');
-
-        $this->assertDatabaseHas('pre_reservations', [
-            'id' => $this->preReservation->id,
+        $this->assertDatabaseHas('reservations', [
+            'id' => $this->reservation->id,
             'status' => 'validated',
         ]);
-
-        // Vérifier que l'email a été envoyé
         Mail::assertSent(\App\Mail\ReservationValidated::class);
     }
 
-    /** @test */
-    public function hotel_admin_can_reject_reservation()
+    #[Test]
+    public function hotel_admin_can_reject_reservation(): void
     {
         Mail::fake();
-
         $this->actingAs($this->admin);
 
-        $response = $this->post(route('hotel.reservations.reject', $this->preReservation->id), [
+        $response = $this->post(route('hotel.reservations.reject', $this->reservation->id), [
             'reason' => 'Dates non disponibles',
         ]);
 
         $response->assertRedirect();
         $response->assertSessionHas('success');
-
-        $this->assertDatabaseHas('pre_reservations', [
-            'id' => $this->preReservation->id,
+        $this->assertDatabaseHas('reservations', [
+            'id' => $this->reservation->id,
             'status' => 'rejected',
         ]);
-
-        // Vérifier que l'email a été envoyé
         Mail::assertSent(\App\Mail\ReservationRejected::class);
     }
 
-    /** @test */
-    public function validating_reservation_marks_room_as_occupied()
+    #[Test]
+    public function validating_reservation_marks_room_as_occupied(): void
     {
         $this->actingAs($this->admin);
-
-        $room = $this->preReservation->room;
-
+        $room = $this->reservation->room;
         $this->assertEquals('available', $room->status);
 
-        $this->post(route('hotel.reservations.validate', $this->preReservation->id));
+        $this->post(route('hotel.reservations.validate', $this->reservation->id));
 
         $room->refresh();
-
         $this->assertEquals('occupied', $room->status);
     }
 
-    /** @test */
-    public function rejecting_reservation_keeps_room_available()
+    #[Test]
+    public function rejecting_reservation_keeps_room_available(): void
     {
         $this->actingAs($this->admin);
+        $room = $this->reservation->room;
 
-        $room = $this->preReservation->room;
-
-        $this->post(route('hotel.reservations.reject', $this->preReservation->id), [
+        $this->post(route('hotel.reservations.reject', $this->reservation->id), [
             'reason' => 'Test',
         ]);
 
         $room->refresh();
-
         $this->assertEquals('available', $room->status);
     }
 
-    /** @test */
-    public function admin_cannot_validate_reservation_from_other_hotel()
+    #[Test]
+    public function admin_cannot_validate_reservation_from_other_hotel(): void
     {
-        // Créer un autre hôtel
         $otherHotel = Hotel::factory()->create();
-        $otherReservation = PreReservation::factory()->create([
+        $otherRoomType = RoomType::factory()->create(['hotel_id' => $otherHotel->id]);
+        $otherRoom = Room::factory()->create([
             'hotel_id' => $otherHotel->id,
+            'room_type_id' => $otherRoomType->id,
+        ]);
+        $otherReservation = Reservation::withoutGlobalScopes()->create([
+            'hotel_id' => $otherHotel->id,
+            'room_type_id' => $otherRoomType->id,
+            'room_id' => $otherRoom->id,
+            'status' => 'pending',
+            'data' => [],
+            'check_in_date' => now(),
+            'check_out_date' => now()->addDays(2),
         ]);
 
         $this->actingAs($this->admin);
-
         $response = $this->post(route('hotel.reservations.validate', $otherReservation->id));
 
         $response->assertStatus(403);

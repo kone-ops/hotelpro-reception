@@ -14,6 +14,7 @@ class ExampleTest extends TestCase
     {
         $response = $this->get('/');
 
-        $response->assertStatus(200);
+        // L'app redirige les invités vers la page de connexion
+        $response->assertRedirect(route('login'));
     }
 }
