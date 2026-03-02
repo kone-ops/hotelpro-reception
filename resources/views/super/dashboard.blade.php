@@ -2,43 +2,43 @@
 	<x-slot name="header">Super Admin - Tableau de bord</x-slot>
 	
 	<div class="row">
-		<div class="col-md-3 mb-4">
-			<div class="card border-0 shadow-sm">
+		<div class="col-md-3 mb-3">
+			<div class="card border-0 shadow-sm stat-card">
 				<div class="card-body text-center">
-				<i class="bi bi-building text-primary" style="font-size: 2rem;"></i>
-				<h5 class="card-title mt-2">Hôtels</h5>
-				<h3 class="text-primary">{{ $stats['total_hotels'] }}</h3>
-				<a href="{{ route('super.hotels.index') }}" class="btn btn-sm btn-outline-primary mt-2">Gérer</a>
+					<i class="bi bi-building text-primary stat-card-icon"></i>
+					<h5 class="card-title mt-1">Hôtels</h5>
+					<h3 class="text-primary">{{ $stats['total_hotels'] }}</h3>
+					<a href="{{ route('super.hotels.index') }}" class="btn btn-sm btn-outline-primary mt-1">Gérer</a>
 				</div>
 			</div>
 		</div>
-		<div class="col-md-3 mb-4">
-			<div class="card border-0 shadow-sm">
+		<div class="col-md-3 mb-3">
+			<div class="card border-0 shadow-sm stat-card">
 				<div class="card-body text-center">
-				<i class="bi bi-people text-success" style="font-size: 2rem;"></i>
-				<h5 class="card-title mt-2">Utilisateurs</h5>
-				<h3 class="text-success">{{ $stats['total_users'] }}</h3>
-				<a href="{{ route('super.users.index') }}" class="btn btn-sm btn-outline-success mt-2">Gérer</a>
+					<i class="bi bi-people text-success stat-card-icon"></i>
+					<h5 class="card-title mt-1">Utilisateurs</h5>
+					<h3 class="text-success">{{ $stats['total_users'] }}</h3>
+					<a href="{{ route('super.users.index') }}" class="btn btn-sm btn-outline-success mt-1">Gérer</a>
 				</div>
 			</div>
 		</div>
-		<div class="col-md-3 mb-4">
-			<div class="card border-0 shadow-sm">
+		<div class="col-md-3 mb-3">
+			<div class="card border-0 shadow-sm stat-card">
 				<div class="card-body text-center">
-				<i class="bi bi-calendar-check text-warning" style="font-size: 2rem;"></i>
-				<h5 class="card-title mt-2">Réservations</h5>
-				<h3 class="text-warning">{{ $stats['total_reservations'] }}</h3>
-				<a href="{{ route('super.activity') }}" class="btn btn-sm btn-outline-warning mt-2">Activité</a>
+					<i class="bi bi-calendar-check text-warning stat-card-icon"></i>
+					<h5 class="card-title mt-1">Enregistrements</h5>
+					<h3 class="text-warning">{{ $stats['total_reservations'] }}</h3>
+					<a href="{{ route('super.activity') }}" class="btn btn-sm btn-outline-warning mt-1">Activité</a>
 				</div>
 			</div>
 		</div>
-		<div class="col-md-3 mb-4">
-			<div class="card border-0 shadow-sm">
+		<div class="col-md-3 mb-3">
+			<div class="card border-0 shadow-sm stat-card">
 				<div class="card-body text-center">
-				<i class="bi bi-graph-up text-info" style="font-size: 2rem;"></i>
-				<h5 class="card-title mt-2">Aujourd'hui</h5>
-				<h3 class="text-info">{{ $stats['reservations_today'] }}</h3>
-				<a href="{{ route('super.reports.index') }}" class="btn btn-sm btn-outline-info mt-2">Rapports</a>
+					<i class="bi bi-graph-up text-info stat-card-icon"></i>
+					<h5 class="card-title mt-1">Aujourd'hui</h5>
+					<h3 class="text-info">{{ $stats['reservations_today'] }}</h3>
+					<a href="{{ route('super.reports.index') }}" class="btn btn-sm btn-outline-info mt-1">Rapports</a>
 				</div>
 			</div>
 		</div>
@@ -47,17 +47,17 @@
 	<div class="row">
 		<div class="col-md-8">
 			<div class="card border-0 shadow-sm">
-				<div class="card-header bg-transparent d-flex justify-content-between align-items-center">
-					<h5 class="mb-0">
+				<div class="card-header bg-transparent py-2 d-flex justify-content-between align-items-center">
+					<h5 class="mb-0 card-title">
 						<i class="bi bi-activity me-2"></i>Activité récente (24h)
 					</h5>
 					<span class="badge bg-primary">{{ $recentActivities->count() }}</span>
 				</div>
-				<div class="card-body">
+				<div class="card-body py-2">
 					@if($recentActivities->count() > 0)
 						<div class="list-group list-group-flush">
 							@foreach($recentActivities as $activity)
-								<div class="list-group-item border-0 px-0 py-3">
+								<div class="list-group-item border-0 px-0 py-2">
 									<div class="d-flex align-items-start">
 										<!-- Icône selon le type d'activité -->
 										<div class="activity-icon me-3">
@@ -74,7 +74,7 @@
 												} elseif(str_contains(strtolower($activity->description), 'modifié') || str_contains(strtolower($activity->description), 'mis à jour')) {
 													$iconClass = 'bi-pencil-fill';
 													$iconColor = 'text-warning';
-												} elseif(str_contains(strtolower($activity->description), 'réservation')) {
+												} elseif(str_contains(strtolower($activity->description), 'enregistrement')) {
 													$iconClass = 'bi-calendar-check-fill';
 													$iconColor = 'text-info';
 												} elseif(str_contains(strtolower($activity->description), 'hôtel')) {

@@ -1,5 +1,5 @@
-﻿<x-app-layout>
-    <x-slot name="header">Modifier la pré-réservation #{{ $reservation->id }}</x-slot>
+<x-app-layout>
+    <x-slot name="header">Modifier le pré-enregistrement #{{ $reservation->id }}</x-slot>
     
     <div class="row">
         <div class="col-md-12">
@@ -17,9 +17,9 @@
                         @csrf
                         @method('PUT')
                         
-                        <!-- Section 1: Type de Réservation -->
+                        <!-- Section 1: Type d'enregistrement -->
                         <div class="border rounded p-4 mb-4">
-                            <h5 class="mb-3"><i class="bi bi-bookmark-check me-2"></i>Type de Réservation</h5>
+                            <h5 class="mb-3"><i class="bi bi-bookmark-check me-2"></i>Type d'enregistrement</h5>
                             
                             <div class="row">
                                 <div class="col-md-6 mb-3">

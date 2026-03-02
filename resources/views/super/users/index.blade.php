@@ -1,18 +1,26 @@
 <x-app-layout>
 	<x-slot name="header">Gestion des utilisateurs</x-slot>
 	
-	<div class="d-flex justify-content-between align-items-center mb-4">
-		<h4 class="mb-0">Liste des utilisateurs ({{ $users->count() }})</h4>
-		<button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createUserModal">
-			<i class="bi bi-person-plus me-2"></i>Nouvel utilisateur
-		</button>
+	<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+		<h4 class="mb-0 h5">Liste des utilisateurs ({{ $users->count() }})</h4>
+		<div class="d-flex gap-2">
+			<button class="btn btn-outline-secondary" id="selectAllUsersBtn" onclick="toggleSelectAllUsers()">
+				<i class="bi bi-check-square me-2"></i><span id="selectAllUsersText">Tout sélectionner</span>
+			</button>
+			<button class="btn btn-danger" id="deleteMultipleUsersBtn" style="display: none;">
+				<i class="bi bi-trash me-2"></i>Supprimer sélectionnés
+			</button>
+			<button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createUserModal">
+				<i class="bi bi-person-plus me-2"></i>Nouvel utilisateur
+			</button>
+		</div>
 	</div>
 
 	<!-- Les notifications sont maintenant gérées globalement dans le layout -->
 
 	<!-- Filtres -->
-	<div class="card border-0 shadow-sm mb-4">
-		<div class="card-body">
+	<div class="card border-0 shadow-sm mb-3">
+		<div class="card-body py-2">
 			<form method="GET" class="row g-3">
 				<div class="col-md-4">
 					<label class="form-label">Filtrer par hôtel</label>
@@ -25,13 +33,23 @@
 						@endforeach
 					</select>
 				</div>
+				@php
+					$roleLabels = [
+						'super-admin' => 'Super Admin',
+						'hotel-admin' => 'Gérant d\'hôtel',
+						'receptionist' => 'Réceptionniste',
+						'housekeeping' => 'Service des étages',
+						'laundry' => 'Buanderie',
+						'maintenance' => 'Service technique',
+					];
+				@endphp
 				<div class="col-md-4">
 					<label class="form-label">Filtrer par rôle</label>
 					<select name="role" class="form-select" onchange="this.form.submit()">
 						<option value="">Tous les rôles</option>
 						@foreach($roles as $role)
 							<option value="{{ $role->name }}" {{ request('role') == $role->name ? 'selected' : '' }}>
-								{{ ucfirst(str_replace(['_', '-'], ' ', $role->name)) }}
+								{{ $roleLabels[$role->name] ?? ucfirst(str_replace(['_', '-'], ' ', $role->name)) }}
 							</option>
 						@endforeach
 					</select>
@@ -47,22 +65,30 @@
 	</div>
 
 	<div class="card border-0 shadow-sm">
-		<div class="card-body">
+		<div class="card-body p-0">
 			@if($users->count() > 0)
 				<div class="table-responsive">
-					<table id="usersTable" class="table table-hover align-middle">
-						<thead>
+					<table id="usersTable" class="table table-sm table-hover table-striped align-middle mb-0 super-admin-table table-compact" aria-label="Liste des utilisateurs avec filtre par hôtel et rôle">
+						<thead class="table-light">
 							<tr>
-								<th>Utilisateur</th>
-								<th>Email</th>
-								<th>Hôtel</th>
-								<th>Rôle</th>
-								<th width="150">Actions</th>
+								<th scope="col" width="50" class="ps-3">
+									<label class="visually-hidden" for="selectAllUsersCheckbox">Tout sélectionner</label>
+									<input type="checkbox" class="form-check-input" id="selectAllUsersCheckbox" onchange="toggleSelectAllUsers()" aria-label="Tout sélectionner">
+								</th>
+								<th scope="col"><i class="bi bi-person me-1 text-primary"></i>Utilisateur</th>
+								<th scope="col"><i class="bi bi-envelope me-1 text-primary"></i>Email</th>
+								<th scope="col"><i class="bi bi-building me-1 text-primary"></i>Hôtel</th>
+								<th scope="col"><i class="bi bi-person-badge me-1 text-primary"></i>Rôle</th>
+								<th scope="col" width="140" class="text-end pe-3 table-actions-cell"><i class="bi bi-gear me-1 text-muted"></i>Actions</th>
 							</tr>
 						</thead>
 						<tbody>
 							@foreach($users as $user)
 								<tr>
+									<td class="ps-3">
+										<label class="visually-hidden" for="user-{{ $user->id }}">Sélectionner {{ $user->name }}</label>
+										<input type="checkbox" class="form-check-input user-checkbox" value="{{ $user->id }}" id="user-{{ $user->id }}" aria-label="Sélectionner {{ $user->name }}">
+									</td>
 									<td>
 										<div class="d-flex align-items-center">
 											<div class="avatar-sm bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3">
@@ -93,12 +119,12 @@
 											$role = $user->roles->first();
 										@endphp
 										@if($role)
-											<span class="badge bg-{{ $role->name === 'super-admin' ? 'danger' : ($role->name === 'hotel-admin' ? 'warning' : 'success') }}">
-												{{ ucfirst(str_replace(['_', '-'], ' ', $role->name)) }}
+											<span class="badge bg-{{ $role->name === 'super-admin' ? 'danger' : ($role->name === 'hotel-admin' ? 'warning' : ($role->name === 'laundry' ? 'primary' : 'success')) }}">
+												{{ $roleLabels[$role->name] ?? ucfirst(str_replace(['_', '-'], ' ', $role->name)) }}
 											</span>
 										@endif
 									</td>
-									<td>
+									<td class="text-end pe-3 table-actions-cell">
 										<div class="btn-group btn-group-sm">
 											<button class="btn btn-outline-info" onclick="viewUserDetails({{ $user->id }})" title="Voir détails">
 												<i class="bi bi-eye"></i>
@@ -117,10 +143,18 @@
 					</table>
 				</div>
 			@else
-				<div class="text-center py-5">
-					<i class="bi bi-people text-muted" style="font-size: 4rem;"></i>
-					<h5 class="text-muted mt-3">Aucun utilisateur</h5>
-					<p class="text-muted">Aucun utilisateur ne correspond aux filtres appliqués.</p>
+				<div class="card-body">
+					<x-super.empty-table
+						icon="bi-people"
+						title="Aucun utilisateur"
+						message="Aucun utilisateur ne correspond aux filtres appliqués."
+					>
+						<x-slot name="action">
+							<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createUserModal">
+								<i class="bi bi-person-plus me-1"></i>Nouvel utilisateur
+							</button>
+						</x-slot>
+					</x-super.empty-table>
 				</div>
 			@endif
 		</div>
@@ -159,7 +193,7 @@
 							<select name="role" id="create_role" class="form-select" required onchange="toggleHotelField('create')">
 								<option value="">Sélectionner un rôle</option>
 								@foreach($roles as $role)
-									<option value="{{ $role->name }}">{{ ucfirst(str_replace(['_', '-'], ' ', $role->name)) }}</option>
+									<option value="{{ $role->name }}">{{ $roleLabels[$role->name] ?? ucfirst(str_replace(['_', '-'], ' ', $role->name)) }}</option>
 								@endforeach
 							</select>
 						</div>
@@ -173,7 +207,7 @@
 									<option value="{{ $hotel->id }}">{{ $hotel->name }}</option>
 							@endforeach
 							</select>
-							<small class="text-muted">Obligatoire pour les rôles Hotel-Admin et Receptionist</small>
+							<small class="text-muted">Obligatoire pour tous les rôles sauf Super Admin</small>
 						</div>
 					</div>
 				</div>
@@ -222,7 +256,7 @@
 							<select name="role" id="edit_role" class="form-select" required onchange="toggleHotelField('edit')">
 								<option value="">Sélectionner un rôle</option>
 								@foreach($roles as $role)
-									<option value="{{ $role->name }}">{{ ucfirst(str_replace(['_', '-'], ' ', $role->name)) }}</option>
+									<option value="{{ $role->name }}">{{ $roleLabels[$role->name] ?? ucfirst(str_replace(['_', '-'], ' ', $role->name)) }}</option>
 								@endforeach
 							</select>
 						</div>
@@ -236,7 +270,7 @@
 									<option value="{{ $hotel->id }}">{{ $hotel->name }}</option>
 								@endforeach
 							</select>
-							<small class="text-muted">Obligatoire pour les rôles Hotel-Admin et Receptionist</small>
+							<small class="text-muted">Obligatoire pour tous les rôles sauf Super Admin</small>
 						</div>
 					</div>
 				</div>
@@ -368,12 +402,19 @@ function viewUserDetails(userId) {
 				emailElement.title = userEmail;
 			}
 			
-			// Rôle avec badge coloré
+			// Rôle avec badge coloré (libellés français)
+			const roleLabelsJs = {
+				'super-admin': 'Super Admin',
+				'hotel-admin': 'Gérant d\'hôtel',
+				'receptionist': 'Réceptionniste',
+				'housekeeping': 'Service des étages',
+				'laundry': 'Buanderie'
+			};
 			const roleElement = document.getElementById('view_role');
 			if (user.roles && user.roles.length > 0) {
 				const roleName = user.roles[0].name;
-				const roleLabel = roleName.replace(/[-_]/g, ' ').split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-				const roleClass = roleName === 'super-admin' ? 'bg-danger' : (roleName === 'hotel-admin' ? 'bg-warning' : 'bg-success');
+				const roleLabel = roleLabelsJs[roleName] || roleName.replace(/[-_]/g, ' ').split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+				const roleClass = roleName === 'super-admin' ? 'bg-danger' : (roleName === 'hotel-admin' ? 'bg-warning' : (roleName === 'laundry' ? 'bg-primary' : 'bg-success'));
 				roleElement.textContent = roleLabel;
 				roleElement.className = `badge ${roleClass}`;
 			} else {
@@ -407,7 +448,14 @@ function viewUserDetails(userId) {
 			});
 			
 			// Ouvrir le modal
-			const modal = new bootstrap.Modal(document.getElementById('viewUserModal'));
+			const modalEl = document.getElementById('viewUserModal');
+			if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+			modalEl.addEventListener('shown.bs.modal', function onShown() {
+				modalEl.removeEventListener('shown.bs.modal', onShown);
+				const t = modalEl.querySelector('button[data-bs-dismiss="modal"]') || modalEl.querySelector('.btn') || modalEl;
+				if (t && typeof t.focus === 'function') t.focus();
+			});
+			const modal = new bootstrap.Modal(modalEl);
 			modal.show();
 		})
 		.catch(error => {
@@ -467,7 +515,14 @@ function editUser(userId) {
 			document.getElementById('editUserForm').action = `/super/users/${userId}`;
 			
 			// Ouvrir le modal
-			const modal = new bootstrap.Modal(document.getElementById('editUserModal'));
+			const modalEl = document.getElementById('editUserModal');
+			if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+			modalEl.addEventListener('shown.bs.modal', function onShown() {
+				modalEl.removeEventListener('shown.bs.modal', onShown);
+				const t = modalEl.querySelector('button[data-bs-dismiss="modal"]') || modalEl.querySelector('.btn-primary') || modalEl;
+				if (t && typeof t.focus === 'function') t.focus();
+			});
+			const modal = new bootstrap.Modal(modalEl);
 			modal.show();
 		})
 		.catch(error => {
@@ -587,7 +642,7 @@ $(document).ready(function() {
 				text: '<i class="bi bi-file-earmark-pdf me-1"></i> PDF',
 				className: 'btn btn-danger btn-sm',
 				exportOptions: {
-					columns: [0, 1, 2, 3],
+					columns: [1, 2, 3, 4],
 					orthogonal: 'export' // Utiliser les données locales uniquement
 				}
 			},
@@ -596,22 +651,103 @@ $(document).ready(function() {
 				text: '<i class="bi bi-printer me-1"></i> Imprimer',
 				className: 'btn btn-info btn-sm',
 				exportOptions: {
-					columns: [0, 1, 2, 3],
+					columns: [1, 2, 3, 4],
 					orthogonal: 'export' // Utiliser les données locales uniquement
 				}
 			}
 		],
 		pageLength: 25,
 		responsive: true,
-		order: [[0, 'asc']],
+		order: [[1, 'asc']],
 		columnDefs: [
-			{ orderable: false, targets: [4] }
+			{ orderable: false, targets: [0, 5] } // Colonnes checkbox et actions non triables
 		],
 		// Désactiver explicitement le traitement côté serveur
 		processing: false,
 		serverSide: false
 		// Pas d'option ajax - DataTables utilise les données déjà présentes dans le DOM
 	});
+	
+	// Gestion de la sélection multiple pour les utilisateurs
+	const userCheckboxes = document.querySelectorAll('.user-checkbox');
+	const deleteMultipleUsersBtn = document.getElementById('deleteMultipleUsersBtn');
+	const selectAllUsersCheckbox = document.getElementById('selectAllUsersCheckbox');
+	const selectAllUsersBtn = document.getElementById('selectAllUsersBtn');
+
+	function updateDeleteUsersButton() {
+		const checked = document.querySelectorAll('.user-checkbox:checked');
+		if (checked.length > 0 && deleteMultipleUsersBtn) {
+			deleteMultipleUsersBtn.style.display = 'block';
+			deleteMultipleUsersBtn.innerHTML = `<i class="bi bi-trash me-2"></i>Supprimer ${checked.length} sélectionné(s)`;
+		} else if (deleteMultipleUsersBtn) {
+			deleteMultipleUsersBtn.style.display = 'none';
+		}
+		
+		// Mettre à jour le checkbox "Tout sélectionner"
+		if (selectAllUsersCheckbox && userCheckboxes.length > 0) {
+			const allChecked = checked.length === userCheckboxes.length && userCheckboxes.length > 0;
+			selectAllUsersCheckbox.checked = allChecked;
+		}
+		
+		// Mettre à jour le texte du bouton
+		const selectAllUsersText = document.getElementById('selectAllUsersText');
+		if (selectAllUsersText && userCheckboxes.length > 0) {
+			const allChecked = checked.length === userCheckboxes.length;
+			selectAllUsersText.textContent = allChecked ? 'Tout désélectionner' : 'Tout sélectionner';
+			if (selectAllUsersBtn) {
+				selectAllUsersBtn.innerHTML = allChecked 
+					? `<i class="bi bi-square me-2"></i><span id="selectAllUsersText">Tout désélectionner</span>`
+					: `<i class="bi bi-check-square me-2"></i><span id="selectAllUsersText">Tout sélectionner</span>`;
+			}
+		}
+	}
+	
+	// Fonction pour tout sélectionner/désélectionner
+	window.toggleSelectAllUsers = function() {
+		const checkboxes = document.querySelectorAll('.user-checkbox');
+		const checked = document.querySelectorAll('.user-checkbox:checked');
+		const allChecked = checked.length === checkboxes.length && checkboxes.length > 0;
+		
+		checkboxes.forEach(checkbox => {
+			checkbox.checked = !allChecked;
+		});
+		
+		updateDeleteUsersButton();
+	}
+	
+	// Attacher les événements aux checkboxes
+	if (userCheckboxes.length > 0) {
+		userCheckboxes.forEach(checkbox => {
+			checkbox.addEventListener('change', updateDeleteUsersButton);
+		});
+	}
+	
+	// Suppression multiple
+	if (deleteMultipleUsersBtn) {
+		deleteMultipleUsersBtn.addEventListener('click', function() {
+			const checked = Array.from(document.querySelectorAll('.user-checkbox:checked'))
+				.map(cb => cb.value);
+			
+			if (checked.length === 0) {
+				alert('Aucun utilisateur sélectionné');
+				return;
+			}
+
+			if (confirm(`Êtes-vous sûr de vouloir supprimer ${checked.length} utilisateur(s) ? Cette action est irréversible.`)) {
+				const form = document.createElement('form');
+				form.method = 'POST';
+				form.action = '{{ route('super.users.destroy-multiple') }}';
+				form.style.display = 'none';
+				// Token CSRF et IDs (même pattern que deleteUser pour éviter "Page Expired")
+				form.innerHTML = `
+					@csrf
+					${checked.map(id => `<input type="hidden" name="user_ids[]" value="${id}">`).join('')}
+				`;
+				document.body.appendChild(form);
+				form.submit();
+			}
+		});
+	}
 	
 	// Protection complète contre les requêtes AJAX
 	if (usersTableInstance) {

@@ -1,5 +1,5 @@
-﻿<x-app-layout>
-	<x-slot name="header">Détails de la pré-réservation #{{ $reservation->id }}</x-slot>
+<x-app-layout>
+	<x-slot name="header">Détails du pré-enregistrement #{{ $reservation->id }}</x-slot>
 	
 	<div class="row">
 		<div class="col-md-8">
@@ -55,7 +55,7 @@
 						</div>
 					@else
 						<div class="alert alert-info mb-2">
-							<small><i class="bi bi-lock me-1"></i>Les modifications sont verrouillées lorsque la réservation n'est plus en attente.</small>
+							<small><i class="bi bi-lock me-1"></i>Les modifications sont verrouillées lorsque l'enregistrement n'est plus en attente.</small>
 						</div>
 					@endif
 					
@@ -63,24 +63,24 @@
 						<div class="d-grid gap-2">
 							<form action="{{ route('hotel.reservations.validate', $reservation) }}" method="POST">
 								@csrf
-								<button type="submit" class="btn btn-success w-100" onclick="return confirm('Valider cette pré-réservation ?')">
+								<button type="submit" class="btn btn-success w-100" onclick="return confirm('Valider ce pré-enregistrement ?')">
 									<i class="bi bi-check-lg me-2"></i>Valider
 								</button>
 							</form>
 							<form action="{{ route('hotel.reservations.reject', $reservation) }}" method="POST">
 								@csrf
-								<button type="submit" class="btn btn-danger w-100" onclick="return confirm('Rejeter cette pré-réservation ?')">
+								<button type="submit" class="btn btn-danger w-100" onclick="return confirm('Rejeter ce pré-enregistrement ?')">
 									<i class="bi bi-x-lg me-2"></i>Rejeter
 								</button>
 							</form>
 						</div>
 					@elseif($reservation->status === 'validated')
 						<div class="alert alert-success">
-							<i class="bi bi-check-circle me-2"></i>Pré-réservation validée (irréversible)
+							<i class="bi bi-check-circle me-2"></i>Pré-enregistrement validé (irréversible)
 						</div>
 					@elseif($reservation->status === 'rejected')
 						<div class="alert alert-danger">
-							<i class="bi bi-x-circle me-2"></i>Pré-réservation rejetée (irréversible)
+							<i class="bi bi-x-circle me-2"></i>Pré-enregistrement rejeté (irréversible)
 						</div>
 					@endif
 					

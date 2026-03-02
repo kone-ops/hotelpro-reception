@@ -1,5 +1,5 @@
 <x-app-layout>
-	<x-slot name="header">Réservations - {{ $hotel->name }}</x-slot>
+	<x-slot name="header">Enregistrements - {{ $hotel->name }}</x-slot>
 	
 	<!-- Les notifications sont maintenant gérées globalement dans le layout -->
 
@@ -69,20 +69,20 @@
 
 	<div class="card border-0 shadow-sm">
 		<div class="card-header bg-transparent">
-			<h5 class="mb-0">Liste des Réservations</h5>
+			<h5 class="mb-0">Liste des enregistrements</h5>
 		</div>
 		<div class="card-body">
 			@if($reservations->count() > 0)
 				<div class="table-responsive">
-					<table id="receptionReservationsTable" class="table table-hover">
-						<thead>
-							<tr >
-								<th class="text-black">Date</th>
-								<th class="text-black">Client</th>
-								<th class="text-black">Email</th>
-								<th class="text-black">Téléphone</th>
-								<th class="text-black">Statut</th>
-								<th class="text-black">Actions</th>
+					<table id="receptionReservationsTable" class="table table-sm table-hover table-striped align-middle mb-0 app-table" aria-label="Liste des enregistrements">
+						<thead class="table-light">
+							<tr>
+								<th scope="col" class="text-black"><i class="bi bi-calendar-event me-1 text-muted"></i>Date</th>
+								<th scope="col" class="text-black"><i class="bi bi-person me-1 text-muted"></i>Client</th>
+								<th scope="col" class="text-black d-none d-lg-table-cell"><i class="bi bi-envelope me-1 text-muted"></i>Email</th>
+								<th scope="col" class="text-black d-none d-md-table-cell"><i class="bi bi-telephone me-1 text-muted"></i>Téléphone</th>
+								<th scope="col" class="text-black table-cell-state"><i class="bi bi-tag me-1 text-muted"></i>Statut</th>
+								<th scope="col" class="text-black text-end table-actions-cell" style="width: 120px;"><i class="bi bi-gear me-1 text-muted"></i>Actions</th>
 							</tr>
 						</thead>
 						<tbody>
@@ -90,9 +90,9 @@
 								<tr class="text-black">
 									<td class="text-black">{{ $reservation->created_at->format('d/m/Y H:i') }}</td>
 									<td class="text-black">{{ $reservation->data['nom'] ?? 'N/A' }}</td>
-									<td class="text-black">{{ $reservation->data['email'] ?? 'N/A' }}</td>
-									<td class="text-black">{{ $reservation->data['telephone'] ?? 'N/A' }}</td>
-									<td class="text-black">
+									<td class="text-black d-none d-lg-table-cell">{{ $reservation->data['email'] ?? 'N/A' }}</td>
+									<td class="text-black d-none d-md-table-cell">{{ $reservation->data['telephone'] ?? 'N/A' }}</td>
+									<td class="text-black table-cell-state">
 										@if($reservation->status === 'validated')
 											<span class="badge bg-success text-black">Validée</span>
 										@elseif($reservation->status === 'checked_in')
@@ -105,7 +105,7 @@
 											<span class="badge bg-warning text-black">En attente</span>
 										@endif
 									</td>
-									<td>
+									<td class="text-end table-actions-cell">
 										<div class="dropdown">
 											<button class="btn btn-sm btn-outline-secondary" data-bs-toggle="dropdown" aria-label="Menu actions" title="Menu actions">
 												<i class="bi bi-three-dots"></i>
@@ -116,7 +116,7 @@
 													<li>
 														<form action="{{ route('reception.reservations.validate', $reservation->id) }}" method="POST" style="display: inline;">
 															@csrf
-															<button type="submit" class="dropdown-item text-success" onclick="return confirm('Valider cette pré-réservation ?')" style="border: none; background: none; width: 100%; text-align: left; cursor: pointer;">
+															<button type="submit" class="dropdown-item text-success" onclick="return confirm('Valider ce pré-enregistrement ?')" style="border: none; background: none; width: 100%; text-align: left; cursor: pointer;">
 																Valider
 															</button>
 														</form>
@@ -124,7 +124,7 @@
 													<li>
 														<form action="{{ route('reception.reservations.reject', $reservation->id) }}" method="POST" style="display: inline;">
 															@csrf
-															<button type="submit" class="dropdown-item text-danger" onclick="return confirm('Rejeter cette pré-réservation ?')" style="border: none; background: none; width: 100%; text-align: left; cursor: pointer;">
+															<button type="submit" class="dropdown-item text-danger" onclick="return confirm('Rejeter ce pré-enregistrement ?')" style="border: none; background: none; width: 100%; text-align: left; cursor: pointer;">
 																Rejeter
 															</button>
 														</form>
@@ -142,11 +142,7 @@
 					</table>
 				</div>
 			@else
-				<div class="text-center py-5">
-					<i class="bi bi-calendar-x text-muted" style="font-size: 4rem;"></i>
-					<h5 class="text-muted mt-3">Aucune Réservation</h5>
-					<p class="text-muted">Les Réservations de l'hôtel apparaîtront ici.</p>
-				</div>
+				<x-super.empty-table icon="bi-calendar-x" title="Aucun enregistrement" message="Les enregistrements de l'hôtel apparaîtront ici." />
 			@endif
 		</div>
 	</div>

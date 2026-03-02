@@ -106,7 +106,7 @@
                                                      style="max-height: 60px; max-width: 120px; background: white; padding: 10px; border-radius: 8px; margin-bottom: 15px;">
                                             @endif
                                             <h4 class="mb-0">{{ $hotel->name }}</h4>
-                                            <p class="mb-0 mt-2">Formulaire de Réservation</p>
+                                            <p class="mb-0 mt-2">Formulaire d'enregistrement</p>
                                         </div>
                                     </div>
                                 </div>
@@ -124,16 +124,12 @@
                         </div>
                         <div class="card-body">
                             <div class="table-responsive">
-                                <table class="table table-hover">
-                                    <thead>
+                                <table class="table table-sm table-hover table-striped align-middle mb-0 super-admin-table" aria-label="Configuration des champs du formulaire">
+                                    <thead class="table-light">
                                         <tr>
-                                            <th style="width: 40%;">Champ</th>
-                                            <th class="text-center" style="width: 30%;">
-                                                <i class="bi bi-eye me-1"></i>Visible
-                                            </th>
-                                            <th class="text-center" style="width: 30%;">
-                                                <i class="bi bi-asterisk me-1"></i>Obligatoire
-                                            </th>
+                                            <th scope="col" style="width: 40%;"><i class="bi bi-input-cursor me-1 text-primary"></i>Champ</th>
+                                            <th scope="col" class="text-center" style="width: 30%;"><i class="bi bi-eye me-1 text-primary"></i>Visible</th>
+                                            <th scope="col" class="text-center" style="width: 30%;"><i class="bi bi-asterisk me-1 text-primary"></i>Obligatoire</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -151,24 +147,15 @@
                                                 </td>
                                                 <td class="text-center">
                                                     <div class="form-check form-switch d-inline-block">
-                                                        <input type="hidden" name="form_fields[{{ $fieldKey }}][visible]" value="0">
-                                                        <input class="form-check-input" type="checkbox" 
-                                                               name="form_fields[{{ $fieldKey }}][visible]" 
-                                                               value="1" 
-                                                               id="visible_{{ $fieldKey }}"
-                                                               {{ $visible ? 'checked' : '' }}>
+                                                        <input type="hidden" name="form_fields[{{ $fieldKey }}][visible]" id="input_visible_{{ $fieldKey }}" value="{{ $visible ? '1' : '0' }}">
+                                                        <input class="form-check-input design-config-checkbox" type="checkbox" data-field="{{ $fieldKey }}" data-type="visible" id="visible_{{ $fieldKey }}" {{ $visible ? 'checked' : '' }}>
                                                         <label class="form-check-label" for="visible_{{ $fieldKey }}"></label>
                                                     </div>
                                                 </td>
                                                 <td class="text-center">
                                                     <div class="form-check form-switch d-inline-block">
-                                                        <input type="hidden" name="form_fields[{{ $fieldKey }}][required]" value="0">
-                                                        <input class="form-check-input" type="checkbox" 
-                                                               name="form_fields[{{ $fieldKey }}][required]" 
-                                                               value="1" 
-                                                               id="required_{{ $fieldKey }}"
-                                                               {{ $required ? 'checked' : '' }}
-                                                               onchange="toggleRequired(this, '{{ $fieldKey }}')">
+                                                        <input type="hidden" name="form_fields[{{ $fieldKey }}][required]" id="input_required_{{ $fieldKey }}" value="{{ $required ? '1' : '0' }}">
+                                                        <input class="form-check-input design-config-checkbox" type="checkbox" data-field="{{ $fieldKey }}" data-type="required" id="required_{{ $fieldKey }}" {{ $required ? 'checked' : '' }} onchange="toggleRequired(this, '{{ $fieldKey }}')">
                                                         <label class="form-check-label" for="required_{{ $fieldKey }}"></label>
                                                     </div>
                                                 </td>
@@ -196,6 +183,9 @@
                                 <small class="text-muted">Créez, modifiez ou supprimez des champs personnalisés pour le formulaire</small>
                             </div>
                             <div class="btn-group">
+                                <button type="button" class="btn btn-outline-secondary btn-sm" id="selectAllFieldsBtn" onclick="toggleSelectAllFields()">
+                                    <i class="bi bi-check-square me-2"></i><span id="selectAllFieldsText">Tout sélectionner</span>
+                                </button>
                                 <button type="button" class="btn btn-danger btn-sm" id="deleteSelectedBtn" onclick="deleteSelectedFields()" style="display: none;">
                                     <i class="bi bi-trash me-1"></i>Supprimer la sélection (<span id="selectedCount">0</span>)
                                 </button>
@@ -207,20 +197,21 @@
                         <div class="card-body">
                             @if($customFields->count() > 0)
                                 <div class="table-responsive">
-                                    <table class="table table-hover">
-                                        <thead>
+                                    <table class="table table-sm table-hover table-striped align-middle mb-0 super-admin-table" aria-label="Champs personnalisés du formulaire">
+                                        <thead class="table-light">
                                             <tr>
-                                                <th style="width: 40px;">
-                                                    <input type="checkbox" id="selectAllFields" onchange="toggleSelectAll(this)">
+                                                <th scope="col" width="40" class="ps-3">
+                                                    <label class="visually-hidden" for="selectAllFields">Tout sélectionner</label>
+                                                    <input type="checkbox" id="selectAllFields" onchange="toggleSelectAll(this)" aria-label="Tout sélectionner">
                                                 </th>
-                                                <th>Section</th>
-                                                <th>Position</th>
-                                                <th>Clé</th>
-                                                <th>Libellé</th>
-                                                <th>Type</th>
-                                                <th class="text-center">Visible</th>
-                                                <th class="text-center">Obligatoire</th>
-                                                <th class="text-center">Actions</th>
+                                                <th scope="col"><i class="bi bi-folder me-1 text-primary"></i>Section</th>
+                                                <th scope="col"><i class="bi bi-sort-numeric-down me-1 text-primary"></i>Position</th>
+                                                <th scope="col"><i class="bi bi-key me-1 text-primary"></i>Clé</th>
+                                                <th scope="col"><i class="bi bi-tag me-1 text-primary"></i>Libellé</th>
+                                                <th scope="col"><i class="bi bi-input-cursor me-1 text-primary"></i>Type</th>
+                                                <th scope="col" class="text-center"><i class="bi bi-eye me-1 text-primary"></i>Visible</th>
+                                                <th scope="col" class="text-center"><i class="bi bi-asterisk me-1 text-primary"></i>Obligatoire</th>
+                                                <th scope="col" class="text-center" width="120">Actions</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -228,7 +219,7 @@
                                                 @php
                                                     $sections = [
                                                         0 => 'Recherche Client',
-                                                        1 => 'Type Réservation',
+                                                        1 => 'Type d\'enregistrement',
                                                         2 => 'Informations Personnelles',
                                                         3 => 'Coordonnées',
                                                         4 => 'Informations Séjour',
@@ -259,7 +250,7 @@
                                                     <td>
                                                         <span class="badge bg-secondary">{{ ucfirst($field->type) }}</span>
                                                         @if($field->options)
-                                                            <br><small class="text-muted">{{ implode(', ', $field->options) }}</small>
+                                                            <br><small class="text-muted">{{ is_array($field->options) ? implode(', ', $field->options) : $field->options }}</small>
                                                         @endif
                                                     </td>
                                                     <td class="text-center">
@@ -375,7 +366,7 @@
                                 <label class="form-label fw-bold">Section <span class="text-danger">*</span></label>
                                 <select name="section" id="field_section" class="form-select" required onchange="updateInsertionPoints()">
                                     <option value="0">Section 0: Recherche Client</option>
-                                    <option value="1">Section 1: Type de Réservation</option>
+                                    <option value="1">Section 1: Type d'enregistrement</option>
                                     <option value="2" selected>Section 2: Informations Personnelles</option>
                                     <option value="3">Section 3: Coordonnées</option>
                                     <option value="4">Section 4: Informations du Séjour</option>
@@ -612,6 +603,12 @@
             methodInput.value = 'PUT';
             
             populateFieldForm(fieldData);
+            if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+            modal.addEventListener('shown.bs.modal', function onShown() {
+                modal.removeEventListener('shown.bs.modal', onShown);
+                const focusTarget = modal.querySelector('button[data-bs-dismiss="modal"]') || modal.querySelector('.btn-primary') || modal;
+                if (focusTarget && typeof focusTarget.focus === 'function') focusTarget.focus();
+            });
             new bootstrap.Modal(modal).show();
         }
         
@@ -665,6 +662,15 @@
                 cb.checked = checkbox.checked;
             });
             updateDeleteButton();
+        }
+        
+        // Fonction alternative pour le bouton "Tout sélectionner"
+        window.toggleSelectAllFields = function() {
+            const checkbox = document.getElementById('selectAllFields');
+            if (checkbox) {
+                checkbox.checked = !checkbox.checked;
+                toggleSelectAll(checkbox);
+            }
         }
         
         // Fonction pour mettre à jour le bouton de suppression multiple
@@ -752,37 +758,45 @@
         });
 
         // Désactiver "obligatoire" si "visible" est désactivé
+        // Synchroniser les checkboxes de config avec les champs cachés (une seule valeur envoyée = pas de tableau)
+        document.querySelectorAll('.design-config-checkbox').forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                const fieldKey = this.getAttribute('data-field');
+                const type = this.getAttribute('data-type');
+                const hidden = document.getElementById('input_' + type + '_' + fieldKey);
+                if (hidden) hidden.value = this.checked ? '1' : '0';
+            });
+        });
+
         function toggleRequired(checkbox, fieldKey) {
             const visibleCheckbox = document.getElementById('visible_' + fieldKey);
             if (!visibleCheckbox.checked && checkbox.checked) {
                 checkbox.checked = false;
-                // Mettre à jour le champ caché pour required
-                const hiddenRequired = document.querySelector(`input[type="hidden"][name="form_fields[${fieldKey}][required]"]`);
-                if (hiddenRequired) {
-                    hiddenRequired.value = '0';
+                const hiddenRequired = document.getElementById('input_required_' + fieldKey);
+                if (hiddenRequired) hiddenRequired.value = '0';
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Attention',
+                        text: 'Un champ doit être visible pour pouvoir être obligatoire.',
+                        confirmButtonText: 'OK'
+                    });
+                } else {
+                    alert('Un champ doit être visible pour pouvoir être obligatoire.');
                 }
-                Swal.fire({
-                    icon: 'warning',
-                    title: 'Attention',
-                    text: 'Un champ doit être visible pour pouvoir être obligatoire.',
-                    confirmButtonText: 'OK'
-                });
             }
         }
 
         // Désactiver "obligatoire" quand "visible" est désactivé
-        document.querySelectorAll('input[type="checkbox"][name*="[visible]"]').forEach(checkbox => {
+        document.querySelectorAll('.design-config-checkbox[data-type="visible"]').forEach(checkbox => {
             checkbox.addEventListener('change', function() {
                 if (!this.checked) {
-                    const fieldKey = this.id.replace('visible_', '');
+                    const fieldKey = this.getAttribute('data-field');
                     const requiredCheckbox = document.getElementById('required_' + fieldKey);
                     if (requiredCheckbox) {
                         requiredCheckbox.checked = false;
-                        // Mettre à jour le champ caché pour required
-                        const hiddenRequired = document.querySelector(`input[type="hidden"][name="form_fields[${fieldKey}][required]"]`);
-                        if (hiddenRequired) {
-                            hiddenRequired.value = '0';
-                        }
+                        const hiddenRequired = document.getElementById('input_required_' + fieldKey);
+                        if (hiddenRequired) hiddenRequired.value = '0';
                     }
                 }
             });
@@ -798,6 +812,34 @@
                     preview.style.background = `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)`;
                 }
             });
+        });
+
+        // Confirmation avant création d'un champ personnalisé
+        document.getElementById('fieldForm').addEventListener('submit', function(e) {
+            const method = document.getElementById('field_method').value;
+            const key = document.getElementById('field_key').value;
+            const label = document.getElementById('field_label').value;
+            
+            // Si c'est une création (POST), demander confirmation
+            if (method === 'POST') {
+                if (!key || !label) {
+                    e.preventDefault();
+                    alert('Veuillez remplir au moins la clé et le libellé du champ.');
+                    return false;
+                }
+                
+                const confirmed = confirm(
+                    'Êtes-vous sûr de vouloir créer ce champ personnalisé ?\n\n' +
+                    'Clé: ' + key + '\n' +
+                    'Libellé: ' + label + '\n\n' +
+                    'Le champ sera ajouté au formulaire d\'enregistrement.'
+                );
+                
+                if (!confirmed) {
+                    e.preventDefault();
+                    return false;
+                }
+            }
         });
     </script>
 </x-app-layout>

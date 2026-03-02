@@ -1,0 +1,33 @@
+<?php
+
+return [
+    'form_fields' => [
+        'type_reservation' => 'Reservation Type',
+        'nom_groupe' => 'Group Name',
+        'code_groupe' => 'Group Code',
+        'type_piece_identite' => 'ID Document Type',
+        'numero_piece_identite' => 'ID Document Number',
+        'nom' => 'Last Name',
+        'prenom' => 'First Name',
+        'sexe' => 'Gender',
+        'date_naissance' => 'Date of Birth',
+        'lieu_naissance' => 'Place of Birth',
+        'nationalite' => 'Nationality',
+        'adresse' => 'Address',
+        'telephone' => 'Phone',
+        'email' => 'Email',
+        'profession' => 'Profession',
+        'date_arrivee' => 'Arrival Date',
+        'heure_arrivee' => 'Arrival Time',
+        'date_depart' => 'Departure Date',
+        'nombre_adultes' => 'Number of Adults',
+        'nombre_enfants' => 'Number of Children',
+        'venant_de' => 'Coming From',
+        'type_chambre' => 'Room Type',
+        'room_id' => 'Room Number',
+        'piece_identite_recto' => 'ID Document (Front)',
+        'piece_identite_verso' => 'ID Document (Back)',
+        'signature' => 'Signature',
+        'preferences' => 'Preferences / Special requests',
+    ],
+];

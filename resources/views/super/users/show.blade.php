@@ -35,11 +35,23 @@
 							</div>
 							<div class="mb-3">
 								<strong>Rôles:</strong><br>
-								@foreach($user->roles as $role)
-									<span class="badge bg-{{ $role->name === 'super_admin' ? 'danger' : ($role->name === 'hotel_admin' ? 'warning' : 'success') }}">
-										{{ ucfirst(str_replace('_', ' ', $role->name)) }}
+								@php
+									$roleLabels = [
+										'super-admin' => 'Super Admin',
+										'hotel-admin' => 'Gérant d\'hôtel',
+										'receptionist' => 'Réceptionniste',
+										'housekeeping' => 'Service des étages',
+										'laundry' => 'Buanderie',
+									];
+									$displayRole = $user->roles->first();
+								@endphp
+								@if($displayRole)
+									<span class="badge bg-{{ $displayRole->name === 'super-admin' ? 'danger' : ($displayRole->name === 'hotel-admin' ? 'warning' : ($displayRole->name === 'laundry' ? 'primary' : 'success')) }}">
+										{{ $roleLabels[$displayRole->name] ?? ucfirst(str_replace(['_', '-'], ' ', $displayRole->name)) }}
 									</span>
-								@endforeach
+								@else
+									<span class="text-muted">Aucun rôle</span>
+								@endif
 							</div>
 						</div>
 					</div>

@@ -61,6 +61,12 @@ class EnsureHotelAccess
             return redirect()->route('hotel.dashboard')->with('error', $message);
         } elseif ($user->hasRole('receptionist')) {
             return redirect()->route('reception.dashboard')->with('error', $message);
+        } elseif ($user->hasRole('housekeeping')) {
+            return redirect()->route('housekeeping.dashboard')->with('error', $message);
+        } elseif ($user->hasRole('laundry')) {
+            return redirect()->route('laundry.dashboard')->with('error', $message);
+        } elseif ($user->hasRole('maintenance')) {
+            return redirect()->route('maintenance.dashboard')->with('error', $message);
         }
         
         // Dernier recours

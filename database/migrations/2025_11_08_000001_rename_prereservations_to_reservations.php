@@ -12,35 +12,80 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // 1. Renommer la table pre_reservations → reservations
-        Schema::rename('pre_reservations', 'reservations');
+        // 1. Renommer la table pre_reservations → reservations (seulement si pre_reservations existe et reservations n'existe pas)
+        $needsRename = Schema::hasTable('pre_reservations') && !Schema::hasTable('reservations');
+        if ($needsRename) {
+            Schema::rename('pre_reservations', 'reservations');
+        }
         
-        // 2. Ajouter les nouveaux champs pour vraie réservation
+        // Vérifier si la table reservations existe (soit après renommage, soit déjà créée)
+        if (!Schema::hasTable('reservations')) {
+            return; // Si la table n'existe toujours pas, on ne peut pas continuer
+        }
+        
+        // 2. Ajouter les nouveaux champs pour vraie réservation (seulement si elles n'existent pas)
         Schema::table('reservations', function (Blueprint $table) {
-            // Check-in
-            $table->timestamp('checked_in_at')->nullable()->after('validated_at');
-            $table->foreignId('checked_in_by')->nullable()->constrained('users')->after('checked_in_at');
-            
-            // Check-out
-            $table->timestamp('checked_out_at')->nullable()->after('checked_in_by');
-            $table->foreignId('checked_out_by')->nullable()->constrained('users')->after('checked_out_at');
-            
-            // Facturation
-            $table->decimal('total_amount', 10, 2)->nullable()->after('data');
-            $table->decimal('paid_amount', 10, 2)->default(0)->after('total_amount');
-            $table->string('payment_method')->nullable()->after('paid_amount');
-            
-            // Synchronisation Oracle
-            $table->timestamp('oracle_synced_at')->nullable()->after('payment_method');
-            $table->string('oracle_id', 50)->nullable()->after('oracle_synced_at');
-            
-            // Index pour performance
-            $table->index('oracle_id');
-            $table->index('oracle_synced_at');
-            $table->index(['hotel_id', 'status']);
-            $table->index(['hotel_id', 'check_in_date']);
-            $table->index(['hotel_id', 'check_out_date']);
+            if (!Schema::hasColumn('reservations', 'checked_in_at')) {
+                $table->timestamp('checked_in_at')->nullable()->after('validated_at');
+            }
+            if (!Schema::hasColumn('reservations', 'checked_in_by')) {
+                $table->foreignId('checked_in_by')->nullable()->constrained('users')->after('checked_in_at');
+            }
+            if (!Schema::hasColumn('reservations', 'checked_out_at')) {
+                $table->timestamp('checked_out_at')->nullable()->after('checked_in_by');
+            }
+            if (!Schema::hasColumn('reservations', 'checked_out_by')) {
+                $table->foreignId('checked_out_by')->nullable()->constrained('users')->after('checked_out_at');
+            }
+            if (!Schema::hasColumn('reservations', 'total_amount')) {
+                $table->decimal('total_amount', 10, 2)->nullable()->after('data');
+            }
+            if (!Schema::hasColumn('reservations', 'paid_amount')) {
+                $table->decimal('paid_amount', 10, 2)->default(0)->after('total_amount');
+            }
+            if (!Schema::hasColumn('reservations', 'payment_method')) {
+                $table->string('payment_method')->nullable()->after('paid_amount');
+            }
+            if (!Schema::hasColumn('reservations', 'oracle_synced_at')) {
+                $table->timestamp('oracle_synced_at')->nullable()->after('payment_method');
+            }
+            if (!Schema::hasColumn('reservations', 'oracle_id')) {
+                $table->string('oracle_id', 50)->nullable()->after('oracle_synced_at');
+            }
         });
+        // Index pour performance (chaque index dans un try/catch au niveau migration)
+        if (Schema::hasColumn('reservations', 'oracle_id')) {
+            try {
+                Schema::table('reservations', fn (Blueprint $t) => $t->index('oracle_id'));
+            } catch (\Throwable $e) { /* déjà existant */ }
+        }
+        if (Schema::hasColumn('reservations', 'oracle_synced_at')) {
+            try {
+                Schema::table('reservations', fn (Blueprint $t) => $t->index('oracle_synced_at'));
+            } catch (\Throwable $e) { /* déjà existant */ }
+        }
+        try {
+            Schema::table('reservations', fn (Blueprint $t) => $t->index(['hotel_id', 'status']));
+        } catch (\Throwable $e) { /* déjà existant */ }
+        if (Schema::hasColumn('reservations', 'check_in_date')) {
+            try {
+                Schema::table('reservations', fn (Blueprint $t) => $t->index(['hotel_id', 'check_in_date']));
+            } catch (\Throwable $e) { /* déjà existant */ }
+        }
+        if (Schema::hasColumn('reservations', 'check_out_date')) {
+            try {
+                Schema::table('reservations', fn (Blueprint $t) => $t->index(['hotel_id', 'check_out_date']));
+            } catch (\Throwable $e) { /* déjà existant */ }
+        }
+
+        // SQLite: supprimer les index orphelins (référençant des colonnes absentes) avant alter table
+        if (Schema::getConnection()->getDriverName() === 'sqlite') {
+            foreach (['reservations_hotel_id_check_in_date_index', 'reservations_hotel_id_check_out_date_index'] as $idx) {
+                try {
+                    DB::statement("DROP INDEX IF EXISTS {$idx}");
+                } catch (\Throwable $e) { /* ignorer */ }
+            }
+        }
         
         // 3. Mettre à jour les foreign keys dans identity_documents
         if (Schema::hasTable('identity_documents')) {

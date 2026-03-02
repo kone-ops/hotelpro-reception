@@ -4,6 +4,9 @@
 	<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
 		<h4 class="mb-0">Liste des hôtels</h4>
 		<div class="d-flex gap-2">
+			<button class="btn btn-outline-secondary" id="selectAllBtn" onclick="toggleSelectAll()">
+				<i class="bi bi-check-square me-2"></i><span id="selectAllText">Tout sélectionner</span>
+			</button>
 			<button class="btn btn-danger" id="deleteMultipleBtn" style="display: none;">
 				<i class="bi bi-trash me-2"></i>Supprimer sélectionnés
 			</button>
@@ -29,7 +32,7 @@
 						<select class="form-select" id="sort_by" name="sort_by">
 							<option value="name" {{ request('sort_by') == 'name' ? 'selected' : '' }}>Nom</option>
 							<option value="users_count" {{ request('sort_by') == 'users_count' ? 'selected' : '' }}>Nombre d'utilisateurs</option>
-							<option value="reservations_count" {{ request('sort_by') == 'reservations_count' ? 'selected' : '' }}>Nombre de réservations</option>
+							<option value="reservations_count" {{ request('sort_by') == 'reservations_count' ? 'selected' : '' }}>Nombre d'enregistrements</option>
 						</select>
 					</div>
 					<div class="col-md-3">
@@ -85,6 +88,12 @@
 								<li><a class="dropdown-item" href="{{ route('super.hotels.design', $hotel) }}">
 									<i class="bi bi-palette me-2"></i>Design & Formulaire
 								</a></li>
+								<li><a class="dropdown-item" href="{{ route('super.hotels.notifications.show', $hotel) }}">
+									<i class="bi bi-envelope-check me-2"></i>Notifications client
+								</a></li>
+								<li><a class="dropdown-item" href="{{ route('super.hotels.show', $hotel) }}#modules">
+									<i class="bi bi-puzzle me-2"></i>Modules
+								</a></li>
 								<li><button class="dropdown-item" onclick="editHotel({{ $hotel->id }});">
 									<i class="bi bi-pencil me-2"></i>Modifier
 								</button></li>
@@ -109,7 +118,7 @@
 									<div class="text-success">
 										<i class="bi bi-calendar-check" style="font-size: 1.5rem;"></i>
 										<div class="small fw-bold">{{ $hotel->reservations_count }}</div>
-										<div class="small text-muted">Réservations</div>
+										<div class="small text-muted">Enregistrements</div>
 									</div>
 								</div>
 								<div class="col-4">
@@ -925,7 +934,14 @@ function editHotel(hotelId) {
 			loadRoomTypes(hotelId);
 			
 			document.getElementById('editHotelForm').action = `/super/hotels/${hotelId}`;
-			new bootstrap.Modal(document.getElementById('editHotelModal')).show();
+			const modalEl = document.getElementById('editHotelModal');
+			if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+			modalEl.addEventListener('shown.bs.modal', function onShown() {
+				modalEl.removeEventListener('shown.bs.modal', onShown);
+				const t = modalEl.querySelector('button[data-bs-dismiss="modal"]') || modalEl.querySelector('.btn-primary') || modalEl;
+				if (t && typeof t.focus === 'function') t.focus();
+			});
+			new bootstrap.Modal(modalEl).show();
 		})
 		.catch(error => {
 			console.error('Erreur détaillée:', error);
@@ -1146,7 +1162,7 @@ function updateEditRoomCount(typeIndex) {
 }
 
 function deleteHotel(hotelId, hotelName) {
-	if (confirm(`Êtes-vous sûr de vouloir supprimer l'hôtel "${hotelName}" ?\n\nCette action est irréversible et supprimera tous les utilisateurs, formulaires et pré-réservations associés.`)) {
+	if (confirm(`Êtes-vous sûr de vouloir supprimer l'hôtel "${hotelName}" ?\n\nCette action est irréversible et supprimera tous les utilisateurs, formulaires et pré-enregistrements associés.`)) {
 		const form = document.createElement('form');
 		form.method = 'POST';
 		form.action = `/super/hotels/${hotelId}`;
@@ -1163,6 +1179,8 @@ function deleteHotel(hotelId, hotelName) {
 document.addEventListener('DOMContentLoaded', function() {
 	const checkboxes = document.querySelectorAll('.hotel-checkbox');
 	const deleteMultipleBtn = document.getElementById('deleteMultipleBtn');
+	const selectAllBtn = document.getElementById('selectAllBtn');
+	const selectAllText = document.getElementById('selectAllText');
 
 	function updateDeleteButton() {
 		const checked = document.querySelectorAll('.hotel-checkbox:checked');
@@ -1172,6 +1190,31 @@ document.addEventListener('DOMContentLoaded', function() {
 		} else if (deleteMultipleBtn) {
 			deleteMultipleBtn.style.display = 'none';
 		}
+		
+		// Mettre à jour le texte du bouton "Tout sélectionner"
+		if (selectAllText && checkboxes.length > 0) {
+			const allChecked = checked.length === checkboxes.length;
+			selectAllText.textContent = allChecked ? 'Tout désélectionner' : 'Tout sélectionner';
+			if (selectAllBtn) {
+				selectAllBtn.innerHTML = allChecked 
+					? `<i class="bi bi-square me-2"></i><span id="selectAllText">Tout désélectionner</span>`
+					: `<i class="bi bi-check-square me-2"></i><span id="selectAllText">Tout sélectionner</span>`;
+				selectAllText = document.getElementById('selectAllText'); // Référencer à nouveau après innerHTML
+			}
+		}
+	}
+	
+	// Fonction pour tout sélectionner/désélectionner
+	window.toggleSelectAll = function() {
+		const checkboxes = document.querySelectorAll('.hotel-checkbox');
+		const checked = document.querySelectorAll('.hotel-checkbox:checked');
+		const allChecked = checked.length === checkboxes.length;
+		
+		checkboxes.forEach(checkbox => {
+			checkbox.checked = !allChecked;
+		});
+		
+		updateDeleteButton();
 	}
 
 	// Attacher les événements aux checkboxes

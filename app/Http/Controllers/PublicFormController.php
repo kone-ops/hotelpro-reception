@@ -13,7 +13,7 @@ use App\Http\Requests\StoreReservationRequest;
 use App\Services\DocumentService;
 use App\Services\FormConfigService;
 use App\Services\ClientService;
-use App\Mail\ReservationCreated;
+use App\Services\ClientNotificationService;
 use App\Mail\NewReservationHotel;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -24,11 +24,13 @@ class PublicFormController extends Controller
 {
     protected $documentService;
     protected $clientService;
+    protected $clientNotificationService;
 
-    public function __construct(DocumentService $documentService, ClientService $clientService)
+    public function __construct(DocumentService $documentService, ClientService $clientService, ClientNotificationService $clientNotificationService)
     {
         $this->documentService = $documentService;
         $this->clientService = $clientService;
+        $this->clientNotificationService = $clientNotificationService;
     }
 
     /**
@@ -230,50 +232,11 @@ class PublicFormController extends Controller
                 'email' => $request->email,
             ]);
 
-            // Envoyer email de confirmation au client
+            // Envoyer les notifications client (email / SMS / WhatsApp selon config super-admin)
             try {
-                if ($request->email) {
-                    $mail = new ReservationCreated($reservation);
-                    Mail::to($request->email)->send($mail);
-                    
-                    // Enregistrer la notification en base de données
-                    NotificationLog::create([
-                        'reservation_id' => $reservation->id,
-                        'type' => 'reservation_created',
-                        'recipient_type' => 'client',
-                        'recipient_email' => $request->email,
-                        'subject' => $mail->envelope()->subject,
-                        'status' => 'success',
-                        'sent_at' => now(),
-                    ]);
-                    
-                    Log::info('Email de confirmation client envoyé', [
-                        'reservation_id' => $reservation->id,
-                        'email' => $request->email,
-                    ]);
-                }
+                $this->clientNotificationService->sendReservationCreated($reservation);
             } catch (\Exception $e) {
-                // Enregistrer l'échec en base de données
-                if ($request->email) {
-                    try {
-                        NotificationLog::create([
-                            'reservation_id' => $reservation->id,
-                            'type' => 'reservation_created',
-                            'recipient_type' => 'client',
-                            'recipient_email' => $request->email,
-                            'subject' => 'Confirmation de votre Réservation',
-                            'status' => 'failed',
-                            'error_message' => $e->getMessage(),
-                        ]);
-                    } catch (\Exception $logError) {
-                        // Si l'enregistrement du log échoue, on continue
-                        Log::error('Erreur lors de l\'enregistrement du log de notification', [
-                            'error' => $logError->getMessage(),
-                        ]);
-                    }
-                }
-                
-                Log::error('Erreur lors de l\'envoi de l\'email au client', [
+                Log::error('Erreur envoi notification client (réservation créée)', [
                     'reservation_id' => $reservation->id,
                     'error' => $e->getMessage(),
                 ]);
@@ -374,7 +337,7 @@ class PublicFormController extends Controller
             // Message d'erreur plus spécifique
             $errorMessage = 'Une erreur est survenue lors de l\'enregistrement.';
             if (str_contains($e->getMessage(), 'piece_identite') || str_contains($e->getMessage(), 'pièce d\'identité')) {
-                $errorMessage = 'Veuillez fournir une pièce d\'identité (recto) en téléchargeant un fichier ou en prenant une photo.';
+                $errorMessage = 'Veuillez fournir la ou les pièces d\'identité demandées (recto et/ou verso) en téléchargeant un fichier ou en prenant une photo.';
             } elseif (str_contains($e->getMessage(), 'chambre') || str_contains($e->getMessage(), 'room')) {
                 $errorMessage = $e->getMessage();
             } elseif (str_contains($e->getMessage(), 'date') || str_contains($e->getMessage(), 'Date')) {
@@ -402,14 +365,14 @@ class PublicFormController extends Controller
             // Upload depuis fichier
             $frontPath = $this->documentService->saveUploadedFile(
                 $request->file('piece_identite_recto'),
-                'identity_documents',
+                'documents', // Stocké dans images/uploads/documents
                 'recto'
             );
         } elseif ($request->filled('photo_recto')) {
             // Upload depuis photo caméra (base64)
             $frontPath = $this->documentService->saveBase64Image(
                 $request->photo_recto,
-                'identity_documents',
+                'documents', // Stocké dans images/uploads/documents
                 'recto'
             );
         }
@@ -419,14 +382,14 @@ class PublicFormController extends Controller
             // Upload depuis fichier
             $backPath = $this->documentService->saveUploadedFile(
                 $request->file('piece_identite_verso'),
-                'identity_documents',
+                'documents', // Stocké dans images/uploads/documents
                 'verso'
             );
         } elseif ($request->filled('photo_verso')) {
             // Upload depuis photo caméra (base64)
             $backPath = $this->documentService->saveBase64Image(
                 $request->photo_verso,
-                'identity_documents',
+                'documents', // Stocké dans images/uploads/documents
                 'verso'
             );
         }

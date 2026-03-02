@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Modules\Housekeeping\Models\HousekeepingTask;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Room extends Model
@@ -16,11 +17,23 @@ class Room extends Model
         'room_number',
         'floor',
         'status',
+        'occupation_state',
+        'cleaning_state',
+        'technical_state',
         'notes',
+        'out_of_service_reason',
+        'out_of_service_from',
+        'out_of_service_until',
+        'out_of_service_by',
     ];
 
     protected $casts = [
         'status' => 'string',
+        'occupation_state' => 'string',
+        'cleaning_state' => 'string',
+        'technical_state' => 'string',
+        'out_of_service_from' => 'date',
+        'out_of_service_until' => 'date',
     ];
 
     /**
@@ -64,11 +77,50 @@ class Room extends Model
     }
 
     /**
-     * Vérifier si la chambre est disponible
+     * État global dérivé des 3 états (priorité : technique > occupation > nettoyage).
+     */
+    public function getGlobalStatus(): string
+    {
+        $technical = $this->technical_state ?? 'normal';
+        $occupation = $this->occupation_state ?? 'free';
+        $cleaning = $this->cleaning_state ?? 'none';
+
+        if ($technical !== 'normal') {
+            return $technical; // issue, maintenance, out_of_service
+        }
+        if ($occupation === 'occupied') {
+            return 'occupied';
+        }
+        if (in_array($cleaning, ['pending', 'in_progress'], true)) {
+            return 'cleaning';
+        }
+
+        return 'available';
+    }
+
+    /**
+     * Met à jour la colonne status pour refléter l'état global (compatibilité existant).
+     */
+    public function syncStatusFromStates(): void
+    {
+        $this->status = $this->getGlobalStatus();
+        $this->saveQuietly();
+    }
+
+    /**
+     * Vérifier si la chambre est disponible pour une nouvelle réservation.
+     */
+    public function isAvailableForReservation(): bool
+    {
+        return $this->getGlobalStatus() === 'available';
+    }
+
+    /**
+     * Vérifier si la chambre est disponible (alias pour compatibilité).
      */
     public function isAvailable(): bool
     {
-        return $this->status === 'available';
+        return $this->getGlobalStatus() === 'available';
     }
 
     /**
@@ -76,7 +128,7 @@ class Room extends Model
      */
     public function updateStatus(string $status): bool
     {
-        if (!in_array($status, ['available', 'occupied', 'maintenance', 'reserved'])) {
+        if (!in_array($status, ['available', 'occupied', 'maintenance', 'reserved', 'cleaning'], true)) {
             return false;
         }
         
@@ -89,7 +141,7 @@ class Room extends Model
      */
     public function isAvailableForPeriod($checkIn, $checkOut): bool
     {
-        if ($this->status !== 'available') {
+        if (!$this->isAvailableForReservation()) {
             return false;
         }
 
@@ -116,11 +168,42 @@ class Room extends Model
     {
         return static::where('hotel_id', $hotelId)
             ->where('room_type_id', $roomTypeId)
-            ->where('status', 'available')
             ->get()
-            ->filter(function($room) use ($checkIn, $checkOut) {
-                return $room->isAvailableForPeriod($checkIn, $checkOut);
+            ->filter(function ($room) use ($checkIn, $checkOut) {
+                return $room->isAvailableForReservation() && $room->isAvailableForPeriod($checkIn, $checkOut);
             });
+    }
+
+    /**
+     * Relation : historique des changements d'état.
+     */
+    public function stateHistory()
+    {
+        return $this->hasMany(RoomStateHistory::class);
+    }
+
+    /**
+     * Relation : tâches de nettoyage.
+     */
+    public function housekeepingTasks()
+    {
+        return $this->hasMany(HousekeepingTask::class);
+    }
+
+    /**
+     * Personne ayant mis la chambre hors service.
+     */
+    public function outOfServiceByUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'out_of_service_by');
+    }
+
+    /**
+     * Pannes signalées sur cette chambre (non résolues ou toutes).
+     */
+    public function pannes()
+    {
+        return $this->hasMany(Panne::class);
     }
 }
 

@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Models\Room;
 use App\Models\RoomType;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Attributes\Test;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
@@ -22,11 +23,9 @@ class RoomManagementTest extends TestCase
     {
         parent::setUp();
 
-        // Créer les rôles
-        Role::create(['name' => 'Super Admin']);
-        $hotelAdminRole = Role::create(['name' => 'Hotel Admin']);
+        Role::create(['name' => 'super-admin']);
+        Role::create(['name' => 'hotel-admin']);
 
-        // Créer un hôtel
         $this->hotel = Hotel::factory()->create();
 
         // Créer un type de chambre
@@ -40,11 +39,11 @@ class RoomManagementTest extends TestCase
         $this->admin = User::factory()->create([
             'hotel_id' => $this->hotel->id,
         ]);
-        $this->admin->assignRole($hotelAdminRole);
+        $this->admin->assignRole('hotel-admin');
     }
 
-    /** @test */
-    public function hotel_admin_can_create_room()
+    #[Test]
+    public function hotel_admin_can_create_room(): void
     {
         $this->actingAs($this->admin);
 
@@ -64,8 +63,8 @@ class RoomManagementTest extends TestCase
         ]);
     }
 
-    /** @test */
-    public function room_number_must_be_unique_per_hotel()
+    #[Test]
+    public function room_number_must_be_unique_per_hotel(): void
     {
         $this->actingAs($this->admin);
 
@@ -86,8 +85,8 @@ class RoomManagementTest extends TestCase
         $response->assertSessionHasErrors('room_number');
     }
 
-    /** @test */
-    public function hotel_admin_can_bulk_create_rooms()
+    #[Test]
+    public function hotel_admin_can_bulk_create_rooms(): void
     {
         $this->actingAs($this->admin);
 
@@ -109,8 +108,8 @@ class RoomManagementTest extends TestCase
         $this->assertDatabaseHas('rooms', ['room_number' => '105']);
     }
 
-    /** @test */
-    public function hotel_admin_can_change_room_status()
+    #[Test]
+    public function hotel_admin_can_change_room_status(): void
     {
         $this->actingAs($this->admin);
 
@@ -124,15 +123,14 @@ class RoomManagementTest extends TestCase
             'status' => 'occupied',
         ]);
 
-        $response->assertRedirect();
-
+        $response->assertOk();
+        $response->assertJson(['success' => true]);
         $room->refresh();
-
         $this->assertEquals('occupied', $room->status);
     }
 
-    /** @test */
-    public function admin_cannot_manage_rooms_from_other_hotel()
+    #[Test]
+    public function admin_cannot_manage_rooms_from_other_hotel(): void
     {
         // Créer un autre hôtel
         $otherHotel = Hotel::factory()->create();
@@ -151,6 +149,7 @@ class RoomManagementTest extends TestCase
         ]);
 
         $response->assertStatus(403);
+        $response->assertJson(['success' => false]);
     }
 }
 

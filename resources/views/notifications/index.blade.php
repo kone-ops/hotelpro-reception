@@ -33,7 +33,7 @@
                 </div>
                 <div class="card-body">
                     <!-- Filtre par utilisateur (seulement pour les admins) -->
-                    @if(isset($receptionists) && $receptionists->count() > 0)
+                    @if(isset($receptionists) && count($receptionists) > 0)
                         <div class="mb-3">
                             <label class="form-label small fw-bold">Filtrer par utilisateur</label>
                             <select class="form-select form-select-sm" id="user-filter" onchange="window.location.href='{{ route('notifications.index') }}?filter={{ $filter }}&user_filter=' + this.value">
@@ -148,7 +148,14 @@
                                                             <span class="badge bg-secondary rounded-pill" style="font-size: 0.6rem;" title="Vous ne pouvez pas modifier cette notification">
                                                                 <i class="bi bi-eye"></i> Lecture seule
                                                             </span>
-                                                    @endif
+                                                        @endif
+                                                        @if($isOwnNotification)
+                                                            <button type="button" class="btn btn-sm btn-outline-danger p-0" style="width: 24px; height: 24px; line-height: 1;" 
+                                                                    onclick="deleteNotification({{ $notification->id }}, this)" 
+                                                                    title="Supprimer">
+                                                                <i class="bi bi-trash" style="font-size: 0.7rem;"></i>
+                                                            </button>
+                                                        @endif
                                                     </div>
                                                 </div>
                                                 <p class="notification-message mb-1">{{ $notification->message }}</p>
@@ -471,6 +478,56 @@ function formatTimeAgo(dateString) {
     if (diff < 86400) return `Il y a ${Math.floor(diff / 3600)} h`;
     if (diff < 604800) return `Il y a ${Math.floor(diff / 86400)} j`;
     return date.toLocaleDateString('fr-FR');
+}
+
+// Fonction pour supprimer une notification
+function deleteNotification(notificationId, button) {
+    if (!confirm('Êtes-vous sûr de vouloir supprimer cette notification ?')) {
+        return;
+    }
+    
+    fetch(`/api/notifications/${notificationId}`, {
+        method: 'DELETE',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+            'Accept': 'application/json',
+        },
+        credentials: 'same-origin'
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Erreur lors de la suppression');
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            // Supprimer l'élément de la liste
+            const item = button.closest('.notification-item');
+            if (item) {
+                item.style.transition = 'opacity 0.3s ease';
+                item.style.opacity = '0';
+                setTimeout(() => {
+                    const hr = item.nextElementSibling;
+                    if (hr && hr.tagName === 'HR') {
+                        hr.remove();
+                    }
+                    item.remove();
+                    // Mettre à jour le compteur
+                    updateNotificationBadge();
+                    // Vérifier si la liste est vide
+                    const list = document.getElementById('notifications-list');
+                    if (list && list.children.length === 0) {
+                        location.reload();
+                    }
+                }, 300);
+            }
+        }
+    })
+    .catch(error => {
+        console.error('Erreur:', error);
+        alert('Une erreur est survenue lors de la suppression de la notification.');
+    });
 }
 
 // Fonction helper pour obtenir l'icône

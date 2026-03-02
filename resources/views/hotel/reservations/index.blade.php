@@ -1,5 +1,5 @@
-﻿<x-app-layout>
-	<x-slot name="header">Pré-réservations - {{ $hotel->name }}</x-slot>
+<x-app-layout>
+	<x-slot name="header">Pré-enregistrements - {{ $hotel->name }}</x-slot>
 	
 	<!-- Les notifications sont maintenant gérées globalement dans le layout -->
 
@@ -69,7 +69,7 @@
 
 	<div class="card border-0 shadow-sm">
 		<div class="card-header bg-transparent d-flex justify-content-between align-items-center">
-			<h5 class="mb-0"><i class="bi bi-list-ul me-2"></i>Liste des Réservations</h5>
+			<h5 class="mb-0"><i class="bi bi-list-ul me-2"></i>Liste des enregistrements</h5>
 			<div>
 				@if(request('status'))
 					<a href="{{ route('hotel.reservations.index') }}" class="btn btn-sm btn-outline-secondary">
@@ -81,16 +81,16 @@
 		<div class="card-body">
 			@if($reservations->count() > 0)
 				<div class="table-responsive">
-					<table id="ReservationsTable" class="table table-hover align-middle">
-						<thead>
+					<table id="ReservationsTable" class="table table-sm table-hover table-striped align-middle mb-0 app-table" aria-label="Liste des enregistrements">
+						<thead class="table-light">
 							<tr>
-								<th>Date</th>
-								<th>Client</th>
-								<th>Email</th>
-								<th>Téléphone</th>
-								<th>Arrivée</th>
-								<th>Statut</th>
-								<th width="150">Actions</th>
+								<th scope="col"><i class="bi bi-calendar-event me-1 text-muted"></i>Date</th>
+								<th scope="col"><i class="bi bi-person me-1 text-muted"></i>Client</th>
+								<th scope="col" class="d-none d-lg-table-cell"><i class="bi bi-envelope me-1 text-muted"></i>Email</th>
+								<th scope="col" class="d-none d-md-table-cell"><i class="bi bi-telephone me-1 text-muted"></i>Téléphone</th>
+								<th scope="col"><i class="bi bi-calendar-range me-1 text-muted"></i>Arrivée</th>
+								<th scope="col" class="table-cell-state"><i class="bi bi-tag me-1 text-muted"></i>Statut</th>
+								<th scope="col" class="text-end table-actions-cell" style="width: 150px;"><i class="bi bi-gear me-1 text-muted"></i>Actions</th>
 							</tr>
 						</thead>
 						<tbody>
@@ -115,7 +115,7 @@
 										<i class="bi bi-calendar me-1 text-muted"></i>
 										{{ $reservation->data['date_arrivee'] ?? 'N/A' }}
 									</td>
-									<td>
+									<td class="table-cell-state">
 										@if($reservation->status === 'validated')
 											<span class="badge bg-success">
 												<i class="bi bi-check-lg me-1"></i>Validée
@@ -138,7 +138,7 @@
 											</span>
 										@endif
 									</td>
-									<td>
+									<td class="text-end table-actions-cell">
 										<div class="btn-group btn-group-sm">
 											<a href="{{ route('hotel.reservations.show', $reservation) }}" class="btn btn-outline-primary" title="Voir détails">
 												<i class="bi bi-eye"></i>
@@ -146,13 +146,13 @@
 											@if($reservation->status === 'pending')
 												<form action="{{ route('hotel.reservations.validate', $reservation) }}" method="POST" class="d-inline">
 													@csrf
-													<button type="submit" class="btn btn-outline-success" title="Valider" onclick="return confirm('Valider cette pré-réservation ?')">
+													<button type="submit" class="btn btn-outline-success" title="Valider" onclick="return confirm('Valider ce pré-enregistrement ?')">
 														<i class="bi bi-check-lg"></i>
 													</button>
 												</form>
 												<form action="{{ route('hotel.reservations.reject', $reservation) }}" method="POST" class="d-inline">
 													@csrf
-													<button type="submit" class="btn btn-outline-danger" title="Rejeter" onclick="return confirm('Rejeter cette pré-réservation ?')">
+													<button type="submit" class="btn btn-outline-danger" title="Rejeter" onclick="return confirm('Rejeter ce pré-enregistrement ?')">
 														<i class="bi bi-x-lg"></i>
 													</button>
 												</form>
@@ -170,20 +170,17 @@
 					{{ $reservations->links() }}
 				</div>
 			@else
-				<div class="text-center py-5">
-					<i class="bi bi-calendar-x text-muted" style="font-size: 4rem;"></i>
-					<h5 class="text-muted mt-3">Aucune Réservation</h5>
-					<p class="text-muted">
-						@if(request('status'))
-							Aucune Réservation avec le statut "{{ request('status') }}".
-						@else
-							Les Réservations apparaîtront ici une fois que les clients auront rempli le formulaire.
-						@endif
-					</p>
-					<a href="{{ route('hotel.qr') }}" class="btn btn-primary">
-						<i class="bi bi-qr-code me-2"></i>Voir le QR Code
-					</a>
-				</div>
+				<x-super.empty-table
+					icon="bi-calendar-x"
+					title="Aucun enregistrement"
+					:message="request('status') ? 'Aucun enregistrement avec le statut « ' . request('status') . ' ».' : 'Les enregistrements apparaîtront ici une fois que les clients auront rempli le formulaire.'"
+				>
+					<x-slot:action>
+						<a href="{{ route('hotel.qr') }}" class="btn btn-primary">
+							<i class="bi bi-qr-code me-2"></i>Voir le QR Code
+						</a>
+					</x-slot:action>
+				</x-super.empty-table>
 			@endif
 		</div>
 	</div>

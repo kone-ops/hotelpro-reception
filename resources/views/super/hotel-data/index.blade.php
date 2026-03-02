@@ -59,7 +59,7 @@
                         <div class="card-body text-center">
                             <i class="bi bi-calendar-check" style="font-size: 2.5rem;"></i>
                             <h3 class="mt-2 mb-1">{{ $hotels->sum('reservations_count') }}</h3>
-                            <p class="mb-0">Réservations</p>
+                            <p class="mb-0">Enregistrements</p>
                         </div>
                     </div>
                 </div>
@@ -98,22 +98,14 @@
                 <div class="card-body p-0">
                     @if($hotels->count() > 0)
                     <div class="table-responsive">
-                        <table class="table table-hover align-middle mb-0">
+                        <table class="table table-sm table-hover table-striped align-middle mb-0 super-admin-table" aria-label="Liste des hôtels avec données et actions export / rapports">
                             <thead class="table-light">
                                 <tr>
-                                    <th class="ps-4">
-                                        <i class="bi bi-building me-2"></i>Hôtel
-                                    </th>
-                                    <th class="text-center">
-                                        <i class="bi bi-calendar-check me-2"></i>Réservations
-                                    </th>
-                                    <th class="text-center">
-                                        <i class="bi bi-people-fill me-2"></i>Utilisateurs
-                                    </th>
-                                    <th class="text-center">
-                                        <i class="bi bi-geo-alt me-2"></i>Localisation
-                                    </th>
-                                    <th class="text-center">Actions</th>
+                                    <th scope="col" class="ps-4"><i class="bi bi-building me-2 text-primary"></i>Hôtel</th>
+                                    <th scope="col" class="text-center"><i class="bi bi-calendar-check me-2 text-primary"></i>Enregistrements</th>
+                                    <th scope="col" class="text-center"><i class="bi bi-people-fill me-2 text-primary"></i>Utilisateurs</th>
+                                    <th scope="col" class="text-center"><i class="bi bi-geo-alt me-2 text-primary"></i>Localisation</th>
+                                    <th scope="col" class="text-center table-actions-cell" width="160"><i class="bi bi-gear me-1 text-muted"></i>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -156,7 +148,7 @@
                                             <span class="text-muted fst-italic">Non renseignée</span>
                                         @endif
                                     </td>
-                                    <td class="text-center">
+                                    <td class="text-center table-actions-cell">
                                         <div class="btn-group" role="group">
                                             <a href="{{ route('super.hotel-data.show', $hotel) }}" 
                                                class="btn btn-primary btn-sm"
@@ -280,7 +272,7 @@
                         <div class="col-md-6">
                             <h6 class="text-muted mb-3">Données Supprimées (Reset)</h6>
                             <ul class="list-unstyled">
-                                <li><i class="bi bi-x-circle text-danger me-2"></i>Réservations</li>
+                                <li><i class="bi bi-x-circle text-danger me-2"></i>Enregistrements</li>
                                 <li><i class="bi bi-x-circle text-danger me-2"></i>Documents d'identité</li>
                                 <li><i class="bi bi-x-circle text-danger me-2"></i>Signatures</li>
                                 <li><i class="bi bi-x-circle text-danger me-2"></i>Logs (impression + activité)</li>

@@ -36,6 +36,13 @@
                 <div class="stat-label">Réservées</div>
             </div>
         </div>
+        <!-- <div class="col-md-2">
+            <div class="stat-card">
+                <i class="bi bi-brush stat-icon icon-info"></i>
+                <div class="stat-value" id="stat-cleaning">{{ $stats['cleaning'] ?? 0 }}</div>
+                <div class="stat-label">En nettoyage</div>
+            </div>
+        </div>
         <div class="col-md-2">
             <div class="stat-card">
                 <i class="bi bi-tools stat-icon icon-secondary"></i>
@@ -43,6 +50,13 @@
                 <div class="stat-label">Maintenance</div>
             </div>
         </div>
+        <div class="col-md-2">
+            <div class="stat-card">
+                <i class="bi bi-exclamation-triangle stat-icon text-warning"></i>
+                <div class="stat-value" id="stat-issue">{{ $stats['issue'] ?? 0 }}</div>
+                <div class="stat-label">Pannes signalées</div>
+            </div>
+        </div> -->
     </div>
 
     <!-- Filtres Rapides -->
@@ -84,7 +98,9 @@
                         <option value="available" {{ request('status') == 'available' ? 'selected' : '' }}>Disponible</option>
                         <option value="occupied" {{ request('status') == 'occupied' ? 'selected' : '' }}>Occupée</option>
                         <option value="reserved" {{ request('status') == 'reserved' ? 'selected' : '' }}>Réservée</option>
+                        <option value="cleaning" {{ request('status') == 'cleaning' ? 'selected' : '' }}>En nettoyage</option>
                         <option value="maintenance" {{ request('status') == 'maintenance' ? 'selected' : '' }}>Maintenance</option>
+                        <option value="issue" {{ request('status') == 'issue' ? 'selected' : '' }}>En attente de maintenance (problème signalé)</option>
                     </select>
                 </div>
                 <div class="col-md-2">
@@ -111,6 +127,8 @@
                                 @if($room->status == 'available') room-available
                                 @elseif($room->status == 'occupied') room-occupied
                                 @elseif($room->status == 'reserved') room-reserved
+                                @elseif($room->status == 'cleaning') room-cleaning
+                                @elseif($room->status == 'issue') room-issue
                                 @else room-maintenance
                                 @endif"
                                 onclick="openStatusMenu({{ $room->id }}, '{{ $room->room_number }}', '{{ $room->status }}')"
@@ -130,6 +148,10 @@
                                         <i class="bi bi-person-fill"></i> Occupée
                                     @elseif($room->status == 'reserved')
                                         <i class="bi bi-calendar-check"></i> Réservée
+                                    @elseif($room->status == 'cleaning')
+                                        <i class="bi bi-brush"></i> En nettoyage
+                                    @elseif($room->status == 'issue')
+                                        <i class="bi bi-exclamation-triangle"></i> En attente de maintenance
                                     @else
                                         <i class="bi bi-tools"></i> Maintenance
                                     @endif
@@ -158,6 +180,12 @@
             </div>
             <div class="legend-item">
                 <span class="legend-color bg-warning"></span> Réservée
+            </div>
+            <div class="legend-item">
+                <span class="legend-color bg-info"></span> En nettoyage
+            </div>
+            <div class="legend-item">
+                <span class="legend-color bg-warning"></span> En attente de maintenance
             </div>
             <div class="legend-item">
                 <span class="legend-color bg-secondary"></span> Maintenance
@@ -192,9 +220,17 @@
                         <i class="bi bi-calendar-check icon-md me-2"></i>
                         <strong>Réservée</strong> - En attente d'arrivée
                     </button>
+                    <button class="btn btn-info btn-lg" onclick="changeRoomStatus('cleaning')">
+                        <i class="bi bi-brush icon-md me-2"></i>
+                        <strong>En nettoyage</strong> - Service des étages
+                    </button>
+                    <button class="btn btn-warning btn-lg" onclick="changeRoomStatus('issue')">
+                        <i class="bi bi-exclamation-triangle icon-md me-2"></i>
+                        <strong>En attente de maintenance</strong> – Pannes signalées (notifie le service technique)
+                    </button>
                     <button class="btn btn-secondary btn-lg" onclick="changeRoomStatus('maintenance')">
                         <i class="bi bi-tools icon-md me-2"></i>
-                        <strong>Maintenance</strong> - Hors service
+                        <strong>Maintenance</strong> – Hors service
                     </button>
                 </div>
             </div>
@@ -234,6 +270,16 @@
 }
 
 .room-reserved {
+    border-color: #ffc107;
+    background: linear-gradient(135deg, var(--card-bg, #ffffff) 0%, #fff3cd 100%);
+}
+
+.room-cleaning {
+    border-color: #0dcaf0;
+    background: linear-gradient(135deg, var(--card-bg, #ffffff) 0%, #cff4fc 100%);
+}
+
+.room-issue {
     border-color: #ffc107;
     background: linear-gradient(135deg, var(--card-bg, #ffffff) 0%, #fff3cd 100%);
 }
@@ -308,6 +354,13 @@ function openStatusMenu(roomId, roomNumber, currentStatus) {
     currentRoomId = roomId;
     currentRoomStatus = currentStatus;
     document.getElementById('modalRoomNumber').textContent = roomNumber;
+    const modalEl = document.getElementById('statusModal');
+    if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+    modalEl.addEventListener('shown.bs.modal', function onShown() {
+        modalEl.removeEventListener('shown.bs.modal', onShown);
+        const focusTarget = modalEl.querySelector('button[data-bs-dismiss="modal"]') || modalEl.querySelector('.btn') || modalEl;
+        if (focusTarget && typeof focusTarget.focus === 'function') focusTarget.focus();
+    });
     statusModal.show();
 }
 
@@ -379,6 +432,8 @@ document.addEventListener('keydown', function(e) {
         changeRoomStatus('reserved');
     } else if (e.key === 'm' || e.key === 'M') {
         changeRoomStatus('maintenance');
+    } else if (e.key === 'p' || e.key === 'P') {
+        changeRoomStatus('issue');
     }
 });
 </script>

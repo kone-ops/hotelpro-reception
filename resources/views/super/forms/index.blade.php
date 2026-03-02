@@ -34,19 +34,19 @@
 	</div>
 
 	<div class="card border-0 shadow-sm">
-		<div class="card-body">
+		<div class="card-body p-0">
 			@if($formFields->count() > 0)
 				<div class="table-responsive">
-					<table id="formsTable" class="table table-hover">
-						<thead>
+					<table id="formsTable" class="table table-sm table-hover table-striped align-middle mb-0 super-admin-table" aria-label="Champs de formulaire prédéfinis par hôtel">
+						<thead class="table-light">
 							<tr>
-								<th>Hôtel</th>
-								<th>Nom</th>
-								<th>Label</th>
-								<th>Type</th>
-								<th>Requis</th>
-								<th>Ordre</th>
-								<th>Actions</th>
+								<th scope="col"><i class="bi bi-building me-1 text-primary"></i>Hôtel</th>
+								<th scope="col"><i class="bi bi-tag me-1 text-primary"></i>Nom</th>
+								<th scope="col"><i class="bi bi-card-text me-1 text-primary"></i>Label</th>
+								<th scope="col"><i class="bi bi-input-cursor me-1 text-primary"></i>Type</th>
+								<th scope="col"><i class="bi bi-asterisk me-1 text-primary"></i>Requis</th>
+								<th scope="col"><i class="bi bi-sort-numeric-down me-1 text-primary"></i>Ordre</th>
+								<th scope="col" class="text-end" width="120">Actions</th>
 							</tr>
 						</thead>
 						<tbody>
@@ -79,12 +79,13 @@
 					</table>
 				</div>
 			@else
-					<div class="text-center py-5">
-						<i class="bi bi-exclamation-circle text-warning" style="font-size: 4rem;"></i>
-						<h5 class="text-muted mt-3">Aucun champ prédéfini</h5>
-						<p class="text-muted">Lancez la commande pour initialiser les champs.</p>
-						<p class="small text-muted">Commande: <code>php artisan fields:init</code></p>
-					</div>
+				<div class="card-body">
+					<x-super.empty-table
+						icon="bi-input-cursor-text"
+						title="Aucun champ prédéfini"
+						message="Lancez la commande pour initialiser les champs : php artisan fields:init"
+					/>
+				</div>
 			@endif
 		</div>
 	</div>

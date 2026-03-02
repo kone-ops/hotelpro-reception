@@ -71,14 +71,17 @@ class HotelDesignController extends Controller
         $data = $request->validate([
             // Design
             'logo' => 'nullable|image|mimes:jpeg,jpg,png,svg|max:2048',
-            'primary_color' => 'nullable|string|max:7|regex:/^#[0-9A-Fa-f]{6}$/',
-            'secondary_color' => 'nullable|string|max:7|regex:/^#[0-9A-Fa-f]{6}$/',
-            
-            // Configuration des champs
+            // Couleurs : accepter vide ou hexa (les checkboxes envoient parfois un tableau)
+            'primary_color' => 'nullable|string|max:7',
+            'secondary_color' => 'nullable|string|max:7',
+
+            // Configuration des champs : visible/required peuvent être "0", "1" ou ["0","1"]
+            // quand hidden + checkbox ont le même name (PHP envoie un tableau si les deux sont envoyés)
             'form_fields' => 'nullable|array',
-            'form_fields.*.visible' => 'boolean',
-            'form_fields.*.required' => 'boolean',
-            
+            'form_fields.*' => 'nullable|array',
+            'form_fields.*.visible' => 'nullable',
+            'form_fields.*.required' => 'nullable',
+
             // Settings généraux
             'settings' => 'nullable|array',
         ]);
@@ -86,18 +89,37 @@ class HotelDesignController extends Controller
         // Gérer l'upload du logo
         if ($request->hasFile('logo')) {
             // Supprimer l'ancien logo si existe
-            if ($hotel->logo && Storage::disk('public')->exists($hotel->logo)) {
-                Storage::disk('public')->delete($hotel->logo);
+            if ($hotel->logo) {
+                $oldPath = public_path($hotel->logo);
+                // Compatibilité avec anciens chemins
+                if (strpos($hotel->logo, 'storage/') === 0 || strpos($hotel->logo, 'hotels/') === 0) {
+                    $oldPath = public_path('images/logos/' . basename($hotel->logo));
+                }
+                if (\Illuminate\Support\Facades\File::exists($oldPath)) {
+                    \Illuminate\Support\Facades\File::delete($oldPath);
+                }
             }
-            $hotel->logo = $request->file('logo')->store('hotels/logos', 'public');
+            
+            $extension = $request->file('logo')->getClientOriginalExtension();
+            $filename = 'logo_' . \Illuminate\Support\Str::random(40) . '.' . $extension;
+            $directory = public_path('images/logos');
+            
+            if (!\Illuminate\Support\Facades\File::exists($directory)) {
+                \Illuminate\Support\Facades\File::makeDirectory($directory, 0755, true);
+            }
+            
+            $request->file('logo')->move($directory, $filename);
+            $hotel->logo = 'images/logos/' . $filename;
         }
         
-        // Mettre à jour les couleurs
-        if ($request->has('primary_color')) {
-            $hotel->primary_color = $request->primary_color;
+        // Mettre à jour les couleurs (format hexa uniquement, sinon conserver l’existant)
+        $primary = trim((string) ($request->input('primary_color') ?? ''));
+        $secondary = trim((string) ($request->input('secondary_color') ?? ''));
+        if ($primary !== '' && preg_match('/^#[0-9A-Fa-f]{6}$/', $primary)) {
+            $hotel->primary_color = $primary;
         }
-        if ($request->has('secondary_color')) {
-            $hotel->secondary_color = $request->secondary_color;
+        if ($secondary !== '' && preg_match('/^#[0-9A-Fa-f]{6}$/', $secondary)) {
+            $hotel->secondary_color = $secondary;
         }
         
         // Mettre à jour la configuration des champs
@@ -107,14 +129,14 @@ class HotelDesignController extends Controller
             // Les champs cachés avec value="0" garantissent qu'une valeur est toujours envoyée
             $normalizedConfig = [];
             foreach ($request->form_fields as $fieldKey => $fieldConfig) {
-                // Pour les checkboxes, si la valeur est "1" (string) ou true (bool), c'est coché
-                // Sinon (0, false, null, absent), c'est décoché
+                // Pour les checkboxes : si coché on envoie hidden=0 + checkbox=1 (PHP peut recevoir un tableau)
+                // Si décoché on envoie seulement hidden=0
                 $visibleValue = $fieldConfig['visible'] ?? '0';
                 $requiredValue = $fieldConfig['required'] ?? '0';
                 
                 $normalizedConfig[$fieldKey] = [
-                    'visible' => ($visibleValue === '1' || $visibleValue === 1 || $visibleValue === true),
-                    'required' => ($requiredValue === '1' || $requiredValue === 1 || $requiredValue === true),
+                    'visible' => $this->normalizeCheckboxValue($visibleValue),
+                    'required' => $this->normalizeCheckboxValue($requiredValue),
                 ];
             }
             $hotel->form_field_config = $normalizedConfig;
@@ -130,6 +152,18 @@ class HotelDesignController extends Controller
         
         return redirect()->route('super.hotels.design', $hotel)
             ->with('success', 'Configuration mise à jour avec succès.');
+    }
+    
+    /**
+     * Normalise une valeur de checkbox (scalaire ou tableau quand hidden+checkbox ont le même name).
+     * Retourne true si la checkbox est considérée comme cochée.
+     */
+    private function normalizeCheckboxValue($value): bool
+    {
+        if (is_array($value)) {
+            return in_array('1', $value, true) || in_array(1, $value, true) || in_array(true, $value, true);
+        }
+        return $value === '1' || $value === 1 || $value === true;
     }
     
     /**

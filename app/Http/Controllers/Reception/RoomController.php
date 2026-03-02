@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Reception;
 
 use App\Http\Controllers\Controller;
+use App\Models\ActivityLog;
 use App\Models\Room;
+use App\Models\RoomStateHistory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -42,13 +44,15 @@ class RoomController extends Controller
             ->sort()
             ->values();
         
-        // Statistiques
+        // Statistiques (status peut être : available, occupied, reserved, maintenance, cleaning, issue)
         $stats = [
             'total' => $hotel->rooms()->count(),
             'available' => $hotel->rooms()->where('status', 'available')->count(),
             'occupied' => $hotel->rooms()->where('status', 'occupied')->count(),
             'maintenance' => $hotel->rooms()->where('status', 'maintenance')->count(),
             'reserved' => $hotel->rooms()->where('status', 'reserved')->count(),
+            'cleaning' => $hotel->rooms()->where('status', 'cleaning')->count(),
+            'issue' => $hotel->rooms()->where('status', 'issue')->count(),
         ];
         
         return view('reception.rooms.index', compact('hotel', 'rooms', 'roomTypes', 'floors', 'stats'));
@@ -81,16 +85,59 @@ class RoomController extends Controller
             }
             
             $validated = $request->validate([
-                'status' => 'required|in:available,occupied,maintenance,reserved'
+                'status' => 'required|in:available,occupied,maintenance,reserved,cleaning,issue'
             ]);
             
-            $room->update($validated);
+            $newStatus = $validated['status'];
+            $updates = [];
+            if ($newStatus === 'available') {
+                $updates = ['occupation_state' => 'free', 'cleaning_state' => 'done', 'technical_state' => 'normal'];
+            } elseif ($newStatus === 'occupied' || $newStatus === 'reserved') {
+                $updates = ['occupation_state' => 'occupied', 'cleaning_state' => 'none', 'technical_state' => 'normal'];
+            } elseif ($newStatus === 'cleaning') {
+                $updates = ['occupation_state' => 'released', 'cleaning_state' => 'in_progress', 'technical_state' => 'normal'];
+            } elseif ($newStatus === 'maintenance') {
+                $updates = ['occupation_state' => 'free', 'cleaning_state' => 'none', 'technical_state' => 'maintenance'];
+            } elseif ($newStatus === 'issue') {
+                $updates = ['occupation_state' => 'free', 'cleaning_state' => 'none', 'technical_state' => 'issue'];
+            }
+            $previousTechnical = $room->technical_state ?? 'normal';
+            $room->update($updates);
+            $room->syncStatusFromStates();
+
+            if (in_array($newStatus, ['issue', 'maintenance'], true)) {
+                RoomStateHistory::create([
+                    'room_id' => $room->id,
+                    'state_type' => 'technical',
+                    'previous_value' => $previousTechnical,
+                    'new_value' => $newStatus === 'maintenance' ? 'maintenance' : 'issue',
+                    'changed_by' => Auth::id(),
+                    'service' => 'reception',
+                    'notes' => $newStatus === 'issue' ? 'Problème signalé par la réception' : 'Mise en maintenance par la réception',
+                    'changed_at' => now(),
+                ]);
+            }
+            
+            ActivityLog::log(
+                "Statut de chambre modifié (réception) : {$room->room_number} → " . $validated['status'],
+                $room,
+                [
+                    'action_type' => 'room_status_changed',
+                    'hotel_name' => $user->hotel?->name,
+                    'new_status' => $newStatus,
+                    'room_number' => $room->room_number,
+                ],
+                'application',
+                'updated'
+            );
             
             $statusLabels = [
                 'available' => 'Disponible',
                 'occupied' => 'Occupée',
                 'maintenance' => 'En maintenance',
-                'reserved' => 'Réservée'
+                'reserved' => 'Réservée',
+                'cleaning' => 'En nettoyage',
+                'issue' => 'Problème signalé',
             ];
             
             return response()->json([

@@ -164,7 +164,7 @@
         <div class="login-card">
             <div class="login-header">
                 <div class="logo-icon">
-                    <img src="{{ asset('Template/logo.jpg') }}" alt="HotelPro Logo" class="logo-img"
+                    <img src="{{ asset('images/logo.jpg') }}" alt="HotelPro Logo" class="logo-img"
                         style="max-width: 80px; width: 90px; height: 80px; border-radius: 30%; object-fit: cover; display: inline-block; box-shadow: 0 4px 12px rgba(0,0,0,0.15); border: 3px solid rgba(255,255,255,0.2); transition: all 0.3s ease;" />
 
                 </div>

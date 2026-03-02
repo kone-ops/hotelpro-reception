@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Réservation Rejetée</title>
+    <title>Enregistrement rejeté</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -139,7 +139,7 @@
         <div class="email-body">
             <div class="error-icon">✕</div>
             
-            <h2 style="text-align: center;">Réservation Rejetée</h2>
+            <h2 style="text-align: center;">Enregistrement rejeté</h2>
             
             @php
                 $data = $reservation->data ?? [];
@@ -149,10 +149,10 @@
             
             <p>Bonjour <strong>{{ $prenom }} {{ $nom }}</strong>,</p>
             
-            <p>Nous regrettons de vous informer que votre demande de pré-réservation a été rejetée.</p>
+            <p>Nous regrettons de vous informer que votre demande de pré-enregistrement a été rejetée.</p>
 
             <div class="reservation-number">
-                <strong>Numéro de réservation :</strong> #{{ $reservation->id }}
+                <strong>Numéro d'enregistrement :</strong> #{{ $reservation->id }}
             </div>
 
             @if($reason)
@@ -162,7 +162,7 @@
             </div>
             @endif
 
-            <h2>Détails de la réservation</h2>
+            <h2>Détails de l'enregistrement</h2>
             <div class="info-grid">
                 @if($reservation->roomType)
                 <div class="info-item">

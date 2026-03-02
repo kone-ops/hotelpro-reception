@@ -2,14 +2,17 @@
 
 namespace App\Http\Controllers\Reception;
 
+use App\Events\RoomReleased;
 use App\Http\Controllers\Controller;
+use App\Models\ActivityLog;
 use App\Models\Reservation;
 use App\Models\Room;
+use App\Models\RoomStateHistory;
 use App\Models\RoomType;
-use App\Models\ActivityLog;
 use App\Services\NotificationService;
 use App\Services\FormConfigService;
 use App\Services\ReservationStatusService;
+use App\Services\ClientNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -19,11 +22,13 @@ class ReservationController extends Controller
 {
     protected NotificationService $notificationService;
     protected ReservationStatusService $statusService;
+    protected ClientNotificationService $clientNotificationService;
 
-    public function __construct(NotificationService $notificationService, ReservationStatusService $statusService)
+    public function __construct(NotificationService $notificationService, ReservationStatusService $statusService, ClientNotificationService $clientNotificationService)
     {
         $this->notificationService = $notificationService;
         $this->statusService = $statusService;
+        $this->clientNotificationService = $clientNotificationService;
     }
 
     /**
@@ -379,15 +384,11 @@ class ReservationController extends Controller
             $reservation->room->update(['status' => 'occupied']);
         }
         
-        // Envoyer l'email de confirmation (synchrone - instantané)
+        // Envoyer les notifications client (email / SMS / WhatsApp selon config super-admin)
         try {
-            $reservation->load(['hotel', 'room', 'roomType', 'identityDocument']);
-            if ($reservation->client_email) {
-                \Illuminate\Support\Facades\Mail::to($reservation->client_email)
-                    ->send(new \App\Mail\ReservationValidated($reservation));
-            }
+            $this->clientNotificationService->sendReservationValidated($reservation);
         } catch (\Exception $e) {
-            Log::error('Erreur envoi email validation', [
+            Log::error('Erreur envoi notification validation client', [
                 'reservation_id' => $reservation->id,
                 'error' => $e->getMessage()
             ]);
@@ -464,15 +465,11 @@ class ReservationController extends Controller
                 $reservation->room->update(['status' => 'available']);
         }
         
-        // Envoyer l'email de rejet (synchrone - instantané)
+        // Envoyer les notifications client (email / SMS / WhatsApp selon config super-admin)
         try {
-            $reservation->load(['hotel']);
-            if ($reservation->client_email) {
-                \Illuminate\Support\Facades\Mail::to($reservation->client_email)
-                    ->send(new \App\Mail\ReservationRejected($reservation, $reason ?? ''));
-            }
+            $this->clientNotificationService->sendReservationRejected($reservation, $reason ?? '');
         } catch (\Exception $e) {
-            Log::error('Erreur envoi email rejet', [
+            Log::error('Erreur envoi notification rejet client', [
                 'reservation_id' => $reservation->id,
                 'error' => $e->getMessage()
             ]);
@@ -536,11 +533,17 @@ class ReservationController extends Controller
                 $reservation->room->update(['status' => 'occupied']);
             }
             
-            // Envoyer une notification
+            // Notification interne (équipe réception)
             try {
                 $this->notificationService->notifyCheckIn($reservation->fresh());
             } catch (\Exception $e) {
                 Log::error('Erreur notification check-in', ['error' => $e->getMessage()]);
+            }
+            // Message de bienvenue au client (email/SMS/WhatsApp selon config hôtel)
+            try {
+                $this->clientNotificationService->sendCheckInWelcome($reservation->fresh());
+            } catch (\Exception $e) {
+                Log::error('Erreur envoi message bienvenue client (check-in)', ['error' => $e->getMessage()]);
             }
             
             // Logger l'activité critique
@@ -635,16 +638,36 @@ class ReservationController extends Controller
                 'checked_out_by' => Auth::id(),
             ]);
             
-            // Libérer la chambre
+            // Libérer la chambre : occupation_state = released (le module Housekeeping peut créer une tâche de nettoyage)
             if ($reservation->room) {
-                $reservation->room->update(['status' => 'available']);
+                $room = $reservation->room;
+                $previousOccupation = $room->occupation_state ?? 'occupied';
+                $room->update(['occupation_state' => 'released']);
+                RoomStateHistory::create([
+                    'room_id' => $room->id,
+                    'state_type' => 'occupation',
+                    'previous_value' => $previousOccupation,
+                    'new_value' => 'released',
+                    'changed_by' => Auth::id(),
+                    'service' => 'reception',
+                    'notes' => 'Check-out effectué',
+                    'changed_at' => now(),
+                ]);
+                event(new RoomReleased($room->fresh(), Auth::user()));
+                $room->fresh()->syncStatusFromStates();
             }
             
-            // Envoyer une notification
+            // Notification interne (équipe réception)
             try {
                 $this->notificationService->notifyCheckOut($reservation->fresh());
             } catch (\Exception $e) {
                 Log::error('Erreur notification check-out', ['error' => $e->getMessage()]);
+            }
+            // Message d'au revoir au client (email/SMS/WhatsApp selon config hôtel)
+            try {
+                $this->clientNotificationService->sendCheckOutGoodbye($reservation->fresh());
+            } catch (\Exception $e) {
+                Log::error('Erreur envoi message au revoir client (check-out)', ['error' => $e->getMessage()]);
             }
             
             // Logger l'activité critique
@@ -672,7 +695,7 @@ class ReservationController extends Controller
             ]);
             
             return redirect()->route('reception.reservations.show', $reservation->id)
-                ->with('success', 'Check-out effectué avec succès. La chambre est maintenant disponible.');
+                ->with('success', 'Check-out effectué avec succès. La chambre a été libérée.');
             
         } catch (\Exception $e) {
             DB::rollBack();

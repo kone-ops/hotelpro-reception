@@ -71,6 +71,25 @@
             </div>
         </div>
     </div>
+
+    <!-- Sessions actives -->
+    <div class="row g-4 mt-2">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0 text-black"><i class="bi bi-shield-check me-2"></i>Sessions actives</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted mb-3">
+                        Gérez vos sessions actives sur différents appareils. Vous pouvez voir tous les appareils où vous êtes connecté et déconnecter les sessions suspectes.
+                    </p>
+                    <a href="{{ route('sessions.index') }}" class="btn btn-outline-primary">
+                        <i class="bi bi-shield-check me-2"></i>Voir mes sessions actives
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
 </x-app-layout>
 
 <style>

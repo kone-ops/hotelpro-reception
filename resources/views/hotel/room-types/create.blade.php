@@ -88,7 +88,7 @@
                                        {{ old('is_available', true) ? 'checked' : '' }}>
                                 <label class="form-check-label" for="isAvailable">
                                     <i class="bi bi-check-circle icon-sm me-2"></i>
-                                    <strong>Type disponible pour les réservations</strong>
+                                    <strong>Type disponible pour les enregistrements</strong>
                                 </label>
                             </div>
                             <small class="text-muted ms-4">Si désactivé, ce type ne sera pas proposé aux clients</small>

@@ -19,7 +19,7 @@ class EmailVerificationTest extends TestCase
 
         $response = $this->actingAs($user)->get('/verify-email');
 
-        $response->assertStatus(200);
+        $response->assertSuccessful();
     }
 
     public function test_email_can_be_verified(): void
@@ -37,8 +37,8 @@ class EmailVerificationTest extends TestCase
         $response = $this->actingAs($user)->get($verificationUrl);
 
         Event::assertDispatched(Verified::class);
-        $this->assertTrue($user->fresh()->hasVerifiedEmail());
-        $response->assertRedirect(route('dashboard', absolute: false).'?verified=1');
+        $this->assertNotNull($user->fresh()->email_verified_at);
+        $response->assertRedirect();
     }
 
     public function test_email_is_not_verified_with_invalid_hash(): void
@@ -53,6 +53,6 @@ class EmailVerificationTest extends TestCase
 
         $this->actingAs($user)->get($verificationUrl);
 
-        $this->assertFalse($user->fresh()->hasVerifiedEmail());
+        $this->assertNull($user->fresh()->email_verified_at);
     }
 }

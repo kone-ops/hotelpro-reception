@@ -70,16 +70,16 @@
 		<div class="card-body">
 			@if($guests->count() > 0)
 				<div class="table-responsive">
-					<table class="table table-hover align-middle">
-						<thead>
+					<table class="table table-sm table-hover table-striped align-middle mb-0 app-table" aria-label="Clients en séjour">
+						<thead class="table-light">
 							<tr>
-								<th>Client</th>
-								<th>Contact</th>
-								<th>Chambre</th>
-								<th>Arrivée</th>
-								<th>Départ</th>
-								<th>Check-in</th>
-								<th width="150">Actions</th>
+								<th scope="col"><i class="bi bi-person me-1 text-muted"></i>Client</th>
+								<th scope="col" class="d-none d-lg-table-cell"><i class="bi bi-telephone me-1 text-muted"></i>Contact</th>
+								<th scope="col"><i class="bi bi-door-open me-1 text-muted"></i>Chambre</th>
+								<th scope="col"><i class="bi bi-calendar-event me-1 text-muted"></i>Arrivée</th>
+								<th scope="col"><i class="bi bi-calendar-x me-1 text-muted"></i>Départ</th>
+								<th scope="col" class="d-none d-md-table-cell"><i class="bi bi-check-circle me-1 text-muted"></i>Check-in</th>
+								<th scope="col" class="text-end" style="width: 150px;">Actions</th>
 							</tr>
 						</thead>
 						<tbody>
@@ -98,7 +98,7 @@
 											</div>
 										</div>
 									</td>
-									<td>
+									<td class="d-none d-lg-table-cell">
 										<div>
 											<i class="bi bi-envelope me-1 text-muted"></i>
 											<small>{{ $guest->data['email'] ?? 'N/A' }}</small>
@@ -137,7 +137,7 @@
 											<span class="text-muted">-</span>
 										@endif
 									</td>
-									<td>
+									<td class="d-none d-md-table-cell">
 										@if($guest->checked_in_at)
 											<small>{{ $guest->checked_in_at->format('d/m/Y H:i') }}</small>
 											@if($guest->checkedInBy)
@@ -147,7 +147,7 @@
 											<span class="text-muted">-</span>
 										@endif
 									</td>
-									<td>
+									<td class="text-end">
 										<div class="btn-group btn-group-sm">
 											<a href="{{ route('reception.reservations.show', $guest->id) }}" class="btn btn-outline-info" title="Voir détails">
 												<i class="bi bi-eye"></i>
@@ -174,11 +174,7 @@
 					{{ $guests->links() }}
 				</div>
 			@else
-				<div class="text-center py-5">
-					<i class="bi bi-people text-muted" style="font-size: 4rem;"></i>
-					<h5 class="text-muted mt-3">Aucun client en séjour</h5>
-					<p class="text-muted">Aucun client ne correspond aux filtres appliqués.</p>
-				</div>
+				<x-super.empty-table icon="bi-people" title="Aucun client en séjour" message="Aucun client ne correspond aux filtres appliqués." />
 			@endif
 		</div>
 	</div>

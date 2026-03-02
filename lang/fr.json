@@ -1,0 +1,15 @@
+{
+    "Dashboard": "Tableau de bord",
+    "Profile": "Profil",
+    "Log Out": "Déconnexion",
+    "You're logged in!": "Vous êtes connecté.",
+    "Thanks for signing up! Before getting started, could you verify your email address by clicking on the link we just emailed to you? If you didn't receive the email, we will gladly send you another.": "Merci de vous être inscrit. Avant de commencer, pourriez-vous vérifier votre adresse e-mail en cliquant sur le lien que nous venons de vous envoyer ? Si vous n'avez pas reçu l'e-mail, nous vous en enverrons un autre avec plaisir.",
+    "A new verification link has been sent to the email address you provided during registration.": "Un nouveau lien de vérification a été envoyé à l'adresse e-mail que vous avez fournie lors de l'inscription.",
+    "Resend Verification Email": "Renvoyer l'e-mail de vérification",
+    "This is a secure area of the application. Please confirm your password before continuing.": "Cette zone est sécurisée. Veuillez confirmer votre mot de passe pour continuer.",
+    "Password": "Mot de passe",
+    "Confirm": "Confirmer",
+    "Fiche de police": "Fiche de police",
+    "Tableau de bord Réception": "Tableau de bord Réception",
+    "Gestion des Données Hôtels": "Gestion des Données Hôtels"
+}

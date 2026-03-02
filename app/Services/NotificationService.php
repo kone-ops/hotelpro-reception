@@ -73,6 +73,68 @@ class NotificationService
     }
 
     /**
+     * Notifier les utilisateurs d'un hôtel ayant un rôle donné (ex. housekeeping).
+     */
+    public function notifyHousekeeping(
+        int $hotelId,
+        string $type,
+        string $title,
+        string $message,
+        ?string $icon = 'info',
+        ?string $color = null,
+        $notifiable = null,
+        ?string $actionUrl = null,
+        ?string $actionText = null
+    ): void {
+        $users = User::where('hotel_id', $hotelId)->role('housekeeping')->get();
+        foreach ($users as $user) {
+            $this->create(
+                $user,
+                $type,
+                $title,
+                $message,
+                $icon,
+                $color,
+                $notifiable,
+                $notifiable ? ['room_id' => $notifiable->id ?? null, 'room_number' => $notifiable->room_number ?? null] : null,
+                $actionUrl,
+                $actionText
+            );
+        }
+    }
+
+    /**
+     * Notifier les utilisateurs buanderie (rôle laundry) d'un hôtel.
+     */
+    public function notifyLaundry(
+        int $hotelId,
+        string $type,
+        string $title,
+        string $message,
+        ?string $icon = 'info',
+        ?string $color = null,
+        $notifiable = null,
+        ?string $actionUrl = null,
+        ?string $actionText = null
+    ): void {
+        $users = User::where('hotel_id', $hotelId)->role('laundry')->get();
+        foreach ($users as $user) {
+            $this->create(
+                $user,
+                $type,
+                $title,
+                $message,
+                $icon,
+                $color,
+                $notifiable,
+                $notifiable ? ['collection_id' => $notifiable->id ?? null, 'room_id' => $notifiable->room_id ?? null] : null,
+                $actionUrl,
+                $actionText
+            );
+        }
+    }
+
+    /**
      * Notifier les utilisateurs selon leur rôle
      */
     public function notifyByRole(
